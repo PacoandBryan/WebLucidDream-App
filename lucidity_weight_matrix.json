@@ -1,0 +1,55 @@
+{
+  "LUCIDITY_WEIGHT_MATRIX": {
+    "chemical_interference": {
+      "caffeine_late_day": {
+        "weight": -0.75,
+        "bottleneck_threshold": 8,
+        "scientific_reason": "Antagonism of adenosine A1 receptors in the basal forebrain inhibits the homeostatic sleep drive, resulting in fragmented REM architecture and reduced signal-to-noise ratio in executive circuits."
+      },
+      "alcohol_pre_sleep": {
+        "weight": -0.9,
+        "bottleneck_threshold": 4,
+        "scientific_reason": "Acute ethanol consumption induces a robust GABAergic suppression of the locus coeruleus, leading to REM rebound and a total collapse of cholinergic-driven prefrontal metabolic activity."
+      },
+      "melatonin_dependency": {
+        "weight": -0.35,
+        "bottleneck_threshold": 6,
+        "scientific_reason": "Chronic exogenous administration may downregulate endogenous MT1/MT2 receptor sensitivity, disrupting the precision of the circadian phase-response curve necessary for stable REM-on transitions."
+      }
+    },
+    "chronobiology": {
+      "chronotype_mismatch": {
+        "weight": -0.5,
+        "bottleneck_threshold": 7,
+        "scientific_reason": "Circadian desynchrony between endogenous melatonin secretion and external sleep timing disrupts the homeostatic buildup of REM pressure, crucial for prefrontal reactivation."
+      },
+      "sleep_duration_under_6": {
+        "weight": -0.85,
+        "bottleneck_threshold": 5,
+        "scientific_reason": "Restricting sleep duration disproportionately truncates late-morning REM cycles, where the majority of lucid-dream-enabling cholinergic activity occurs."
+      },
+      "frequent_awakenings": {
+        "weight": -0.4,
+        "bottleneck_threshold": 6,
+        "scientific_reason": "Sleep fragmentation inhibits the transition into deeper REM stages, preventing the sustained neural stability required for metacognitive awareness."
+      }
+    },
+    "cognitive_baseline": {
+      "dream_recall_frequency": {
+        "weight": 0.9,
+        "bottleneck_threshold": 2,
+        "scientific_reason": "High-fidelity mnemonic encoding of dream content correlates with increased activity in the temporoparietal junction, a key node for perspective-taking and lucidity."
+      },
+      "reality_check_consistency": {
+        "weight": 0.8,
+        "bottleneck_threshold": 3,
+        "scientific_reason": "Consistent prospective memory training builds a reflexive habit of critical state-testing, bridging the gap between waking and dreaming metacognition."
+      },
+      "baseline_stress": {
+        "weight": -0.6,
+        "bottleneck_threshold": 8,
+        "scientific_reason": "Elevated cortisol levels during sleep enhance amygdalar reactivity and suppress hippocampal-prefrontal communication, often diverting cognitive resources from lucidity to anxiety-driven narratives."
+      }
+    }
+  }
+}
