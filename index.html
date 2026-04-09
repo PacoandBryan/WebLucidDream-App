@@ -251,9 +251,15 @@
                     <h1 class="text-6xl font-bold tracking-tighter">Your Dream Dashboard.</h1>
                     <p class="font-mono text-[11px] opacity-50 mt-4 uppercase">User_001 // Day: <span id="current-day-label">01</span> / 90 // Status: <span class="text-safetyOrange">Plan Active</span></p>
                 </div>
-                <div class="bolted-module px-8 py-5 flex items-center gap-5">
-                    <div class="led-indicator led-active animate-pulse"></div>
-                    <span class="font-mono text-[11px] uppercase tracking-widest">System Status: Optimal</span>
+                <div class="flex flex-col items-end gap-4">
+                    <div id="midnight-block" onclick="openDreamLogger()" class="bolted-module px-12 py-6 bg-highlight cursor-pointer hover:shadow-pressed transition-all flex items-center gap-4">
+                        <span class="font-mono text-[10px] text-safetyOrange uppercase tracking-widest animate-pulse">[ MIDNIGHT BLOCK ]</span>
+                        <span class="font-bold text-sm">Log Last Night's Dream</span>
+                    </div>
+                    <div class="bolted-module px-8 py-3 flex items-center gap-5">
+                        <div class="led-indicator led-active animate-pulse"></div>
+                        <span class="font-mono text-[11px] uppercase tracking-widest">System Status: Optimal</span>
+                    </div>
                 </div>
             </header>
 
@@ -293,8 +299,26 @@
     <div id="crt-overlay" class="crt-overlay">
         <div class="flex justify-between items-start w-full max-w-4xl mx-auto">
             <div id="crt-content" class="crt-text whitespace-pre-wrap text-xl"></div>
-            <button onclick="closeCRT()" id="crt-close" class="hidden font-mono text-xs border border-[#33ff33] px-4 py-2 hover:bg-[#33ff33] hover:text-black transition-all">
-                [ RETURN_TO_DASHBOARD ]
+            <div id="crt-controls" class="flex flex-col gap-4">
+                <button onclick="closeCRT()" id="crt-close" class="hidden font-mono text-xs border border-[#33ff33] px-4 py-2 hover:bg-[#33ff33] hover:text-black transition-all">
+                    [ RETURN_TO_DASHBOARD ]
+                </button>
+            </div>
+        </div>
+
+        <!-- Dream Logger Terminal Content -->
+        <div id="dream-logger-ui" class="hidden w-full max-w-2xl mx-auto mt-12 border border-[#33ff33] p-8">
+            <p class="mb-4">> ENTER DREAM TAGS (comma separated):</p>
+            <input type="text" id="dream-tags" class="w-full bg-transparent border-b border-[#33ff33] text-[#33ff33] outline-none mb-8 font-mono" placeholder="e.g. #vivid, #lucid, #flying">
+
+            <p class="mb-4">> LUCIDITY LEVEL (1-10):</p>
+            <input type="number" id="dream-lucidity" min="1" max="10" class="w-full bg-transparent border-b border-[#33ff33] text-[#33ff33] outline-none mb-8 font-mono">
+
+            <p class="mb-4">> NARRATIVE WORD COUNT (APPROX):</p>
+            <input type="number" id="dream-words" class="w-full bg-transparent border-b border-[#33ff33] text-[#33ff33] outline-none mb-12 font-mono">
+
+            <button onclick="saveDreamLog()" class="w-full border border-[#33ff33] py-4 hover:bg-[#33ff33] hover:text-black transition-all uppercase font-bold">
+                [ SUBMIT TO LEDGER ]
             </button>
         </div>
     </div>

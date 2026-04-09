@@ -7,7 +7,8 @@ const STATE = {
     currentPhase: 'DIAGNOSTIC',
     diagnosticStep: 0,
     responses: {},
-    protocol: null
+    protocol: null,
+    dreamLogs: {}
 };
 
 const UI = {
@@ -18,13 +19,18 @@ const UI = {
     },
     crt: {
         overlay: document.getElementById('crt-overlay'),
-        content: document.getElementById('crt-content')
+        content: document.getElementById('crt-content'),
+        logger: document.getElementById('dream-logger-ui')
     }
 };
 
 // --- INITIALIZATION ---
 async function init() {
     const savedProtocol = await window.SovereignVault.get('protocol');
+    const savedLogs = await window.SovereignVault.get('dreamLogs');
+
+    if (savedLogs) STATE.dreamLogs = savedLogs;
+
     if (savedProtocol) {
         STATE.protocol = savedProtocol;
         showPhase('DASHBOARD');
@@ -74,23 +80,40 @@ function renderDiagnostic() {
         return;
     }
 
-    document.getElementById('q-domain').textContent = `Step ${STATE.diagnosticStep + 1} of 4`;
+    document.getElementById('q-domain').textContent = `Step ${STATE.diagnosticStep + 1} of ${NeuroEngine.diagnosticFlow.length}`;
     document.getElementById('q-text').textContent = q.question;
 
     const optionsContainer = document.getElementById('q-options');
     optionsContainer.innerHTML = '';
 
-    q.options.forEach(opt => {
-        const btn = document.createElement('button');
-        btn.className = 'w-full py-6 px-8 bolted-module text-left font-bold hover:shadow-pressed transition-all active:translate-y-[2px]';
-        btn.textContent = opt.label;
-        btn.onclick = () => {
-            STATE.responses[q.id] = opt.value;
-            STATE.diagnosticStep++;
-            renderDiagnostic();
-        };
-        optionsContainer.appendChild(btn);
-    });
+    if (q.type === 'time') {
+        const grid = document.createElement('div');
+        grid.className = 'grid grid-cols-2 gap-4';
+        q.options.forEach(opt => {
+            const btn = document.createElement('button');
+            btn.className = 'py-6 px-8 bolted-module font-mono font-bold hover:shadow-pressed transition-all active:translate-y-[2px]';
+            btn.textContent = opt.label;
+            btn.onclick = () => {
+                STATE.responses[q.id] = opt.value;
+                STATE.diagnosticStep++;
+                renderDiagnostic();
+            };
+            grid.appendChild(btn);
+        });
+        optionsContainer.appendChild(grid);
+    } else {
+        q.options.forEach(opt => {
+            const btn = document.createElement('button');
+            btn.className = 'w-full py-6 px-8 bolted-module text-left font-bold hover:shadow-pressed transition-all active:translate-y-[2px]';
+            btn.textContent = opt.label;
+            btn.onclick = () => {
+                STATE.responses[q.id] = opt.value;
+                STATE.diagnosticStep++;
+                renderDiagnostic();
+            };
+            optionsContainer.appendChild(btn);
+        });
+    }
 }
 
 function finalizeDiagnostic() {
@@ -101,15 +124,19 @@ function finalizeDiagnostic() {
     const blockerList = document.getElementById('blocker-list');
     blockerList.innerHTML = '';
 
-    results.activeBlockers.forEach(b => {
+    // Simplified list for paywall
+    const items = [
+        { label: 'Circadian Drift', val: results.jetlag + 'h' },
+        { label: 'T-Min Calculation', val: results.tMin },
+        { label: 'Neuro-Load', val: results.useSupps ? 'Supps Opt-In' : 'Natural' }
+    ];
+
+    items.forEach(item => {
         const div = document.createElement('div');
-        div.className = 'p-4 neumorph-sunken rounded-xl flex items-center gap-4';
+        div.className = 'p-4 neumorph-sunken rounded-xl flex justify-between items-center';
         div.innerHTML = `
-            <div class="w-2 h-2 rounded-full bg-safetyOrange led-glow"></div>
-            <div>
-                <span class="font-mono text-[8px] opacity-40 uppercase block">Recommendation</span>
-                <span class="font-bold text-xs uppercase">${b.label}</span>
-            </div>
+            <span class="font-bold text-xs uppercase">${item.label}</span>
+            <span class="font-mono text-xs opacity-60">${item.val}</span>
         `;
         blockerList.appendChild(div);
     });
@@ -118,15 +145,20 @@ function finalizeDiagnostic() {
 }
 
 async function unlockDashboard() {
-    const text = `> PREPARING YOUR CUSTOM PLAN...
-> OPTIMIZING DREAM WINDOWS...
-> BUILDING 90-DAY JOURNEY...
-> SECURING YOUR DATA...
+    const text = `> INITIALIZING SOVEREIGN ENGINE...
+> CALCULATING T-MIN: ${STATE.results.tMin}
+> SYNCHRONIZING CHRONOTYPES...
+> ANCHORING MISSION PARAMETERS...
+>
+> [ PROTOCOL: THREE-TIER RECURSIVE ]
+> [ RECOVERY BRANCH: ACTIVE ]
+> [ LEDGER: INITIALIZED ]
+>
 > READY. WELCOME TO SOVEREIGN MIND.`;
 
     await showCRT(text, 3000);
 
-    STATE.protocol = NeuroEngine.generateProtocol(STATE.results.activeBlockers, STATE.responses);
+    STATE.protocol = NeuroEngine.generateProtocol(STATE.results, STATE.responses);
     await window.SovereignVault.set('protocol', STATE.protocol);
 
     showPhase('DASHBOARD');
@@ -209,9 +241,17 @@ function renderHabitCards() {
     const today = new Date();
     const currentDay = Math.ceil(Math.abs(today - startDate) / (1000 * 60 * 60 * 24)) || 1;
 
-    STATE.protocol.targetHabits.forEach(habit => {
+    // Dynamic Recovery Injection
+    const yesterdayLog = STATE.protocol.dailyLogs[currentDay - 1] || {};
+    const vetoOccurred = yesterdayLog['chem_curfew'] === false || yesterdayLog['digital_sunset'] === false;
+
+    const habits = [...STATE.protocol.targetHabits];
+    const recovery = NeuroEngine.getRecoveryBranch(vetoOccurred);
+    if (recovery) habits.push(recovery);
+
+    habits.forEach(habit => {
         const card = document.createElement('div');
-        card.className = 'bolted-module p-8 relative overflow-hidden';
+        card.className = `bolted-module p-8 relative overflow-hidden ${habit.tier === 3 ? 'border-2 border-safetyOrange/50' : ''}`;
 
         const isLogged = STATE.protocol.dailyLogs[currentDay]?.[habit.id];
         const { isLocked, status, label } = isLogged ?
@@ -231,8 +271,12 @@ function renderHabitCards() {
 
             <div class="flex justify-between items-start mb-10 mt-4">
                 <div class="relative tooltip-trigger">
-                    <span class="font-mono text-[9px] opacity-40 uppercase block tracking-tighter">Module // ${habit.id.toUpperCase()}</span>
-                    <h4 class="text-2xl font-bold uppercase tracking-tighter text-primaryText">${habit.title}</h4>
+                    <span class="font-mono text-[9px] opacity-40 uppercase block tracking-tighter">
+                        Tier 0${habit.tier} // ${habit.id.toUpperCase()}
+                    </span>
+                    <h4 class="text-2xl font-bold uppercase tracking-tighter text-primaryText">
+                        ${habit.tier === 3 ? '<span class="text-safetyOrange">RECOVERY:</span> ' : ''}${habit.title}
+                    </h4>
                     <div class="tooltip-box">${habit.desc}</div>
                 </div>
                 <div class="flex flex-col items-end">
@@ -317,17 +361,36 @@ async function handleEmergencyEject() {
     const today = new Date();
     const diffDays = Math.ceil(Math.abs(today - startDate) / (1000 * 60 * 60 * 24)) || 1;
 
-    if (diffDays < 90) {
-        await showCRT(`OOPS! PLAN NOT COMPLETE.
-YOU ARE ON DAY: ${diffDays} OF 90.
-REMAINING: ${90 - diffDays} DAYS.
-PLEASE FINISH THE PLAN TO BE ELIGIBLE FOR A REFUND.`, 5000);
-    } else {
-        await showCRT(`> PREPARING YOUR DATA...
-> SAVING YOUR PROGRESS...
-> FINALIZING EXPORT...
-> DONE.`, 4000);
-        generateComplianceHash();
+    // Calculate total compliance
+    let totalPossible = diffDays * 4;
+    let actualCompleted = 0;
+    Object.values(STATE.protocol.dailyLogs).forEach(dayLog => {
+        actualCompleted += Object.values(dayLog).filter(v => v === true).length;
+    });
+    const compliancePct = Math.round((actualCompleted / totalPossible) * 100) || 0;
+
+    const text = `> INITIALIZING PRE-CHECK TERMINAL...
+> SCANNING LOCAL VAULT...
+>
+> MISSION DAY: ${diffDays} / 90
+> TOTAL LOGS: ${actualCompleted}
+> COMPLIANCE RATE: ${compliancePct}%
+>
+> [ STATUS: ${diffDays < 90 ? 'INCOMPLETE' : (compliancePct < 95 ? 'NON_COMPLIANT' : 'ELIGIBLE')} ]
+>
+${diffDays < 90 ? `ERROR: 90-DAY MINIMUM NOT MET.
+REFUND UNLOCKED IN ${90 - diffDays} DAYS.` : (compliancePct < 95 ? `ERROR: COMPLIANCE BELOW 95%.
+GUARANTEE VOIDED. DATA DUMP STILL AVAILABLE.` : `SUCCESS: COMPLIANCE VERIFIED.
+GENERATING REFUND KEY...`)}`;
+
+    await showCRT(text, 0, true);
+
+    if (diffDays >= 90) {
+        const dumpBtn = document.createElement('button');
+        dumpBtn.className = 'font-mono text-xs border border-[#33ff33] px-4 py-2 hover:bg-[#33ff33] hover:text-black transition-all mt-4';
+        dumpBtn.textContent = '[ GENERATE_COMPLIANCE_KEY ]';
+        dumpBtn.onclick = generateComplianceHash;
+        document.getElementById('crt-controls').appendChild(dumpBtn);
     }
 }
 
@@ -343,7 +406,45 @@ function generateComplianceHash() {
 REMEMBER: CONSISTENCY IS KEY FOR THE GUARANTEE!`, 8000);
 }
 
+// --- DREAM LOGGER (SUBCONSCIOUS LEDGER) ---
+function openDreamLogger() {
+    UI.crt.overlay.style.display = 'flex';
+    UI.crt.content.textContent = '> INITIALIZING SUBCONSCIOUS LEDGER...\n> STANDBY FOR NEURAL INPUT...';
+    UI.crt.logger.classList.remove('hidden');
+    document.getElementById('crt-close').classList.remove('hidden');
+}
+
+async function saveDreamLog() {
+    const tags = document.getElementById('dream-tags').value;
+    const lucidity = document.getElementById('dream-lucidity').value;
+    const words = document.getElementById('dream-words').value;
+
+    if (!lucidity || !words) {
+        alert('MISSION FAILED: Lucidity and Word Count required.');
+        return;
+    }
+
+    const startDate = new Date(STATE.protocol.startDate);
+    const today = new Date();
+    const day = Math.ceil(Math.abs(today - startDate) / (1000 * 60 * 60 * 24)) || 1;
+
+    STATE.dreamLogs[day] = { tags, lucidity, words, timestamp: new Date().toISOString() };
+    await window.SovereignVault.set('dreamLogs', STATE.dreamLogs);
+
+    // Close and reset
+    UI.crt.logger.classList.add('hidden');
+    document.getElementById('dream-tags').value = '';
+    document.getElementById('dream-lucidity').value = '';
+    document.getElementById('dream-words').value = '';
+
+    await showCRT('> DATA COMMITTED TO VAULT.\n> CORRELATION ENGINE UPDATED.\n> DISCONNECTING...', 2000);
+    renderDashboard();
+}
+
 window.onload = init;
 window.unlockDashboard = unlockDashboard;
 window.logHabit = logHabit;
 window.handleEmergencyEject = handleEmergencyEject;
+window.openDreamLogger = openDreamLogger;
+window.saveDreamLog = saveDreamLog;
+window.closeCRT = closeCRT;
