@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SOVEREIGN MIND | Industrial Dashboard (90-Day)</title>
+    <title>SOVEREIGN MIND | Dream Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -130,6 +130,28 @@
             box-shadow: inset 1px 1px 2px #babecc, inset -1px -1px 2px #ffffff;
         }
 
+        /* Tooltip styles */
+        .tooltip-trigger:hover .tooltip-box {
+            display: block;
+        }
+        .tooltip-box {
+            display: none;
+            position: absolute;
+            bottom: 120%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            padding: 12px;
+            background: #e0e5ec;
+            border-radius: 8px;
+            box-shadow: 4px 4px 8px #babecc, -4px -4px 8px #ffffff;
+            font-size: 10px;
+            font-family: 'JetBrains Mono', monospace;
+            color: #2d3436;
+            z-index: 50;
+            pointer-events: none;
+        }
+
         .neumorph-card { box-shadow: 8px 8px 16px #babecc, -8px -8px 16px #ffffff; }
         .neumorph-sunken { box-shadow: inset 4px 4px 8px #babecc, inset -4px -4px 8px #ffffff; }
         .neumorph-pressed { box-shadow: inset 6px 6px 12px #babecc, inset -6px -6px 12px #ffffff; }
@@ -156,8 +178,8 @@
     <!-- PHASE 1: DIAGNOSTIC -->
     <section id="phase-diagnostic" class="phase active">
         <header class="w-full max-w-4xl flex justify-between items-center mb-12">
-            <div class="font-mono text-[10px] tracking-tighter uppercase opacity-50">Sovereign_Mind // Ph.D._Somnology_Scan</div>
-            <div class="font-mono text-[10px] tracking-tighter uppercase opacity-50">V9.0_MASTER_SYNTHESIS</div>
+            <div class="font-mono text-[10px] tracking-tighter uppercase opacity-50">Sovereign_Mind // Sleep Quality Scan</div>
+            <div class="font-mono text-[10px] tracking-tighter uppercase opacity-50">V9.0</div>
         </header>
 
         <div class="w-full max-w-2xl bolted-module p-12">
@@ -174,8 +196,8 @@
 
             <div id="diagnostic-content">
                 <div class="mb-8">
-                    <span id="q-domain" class="font-mono text-[10px] text-safetyOrange uppercase tracking-widest block mb-2">DOMAIN_SCANNING...</span>
-                    <h2 id="q-text" class="text-3xl font-bold leading-tight">Quantizing neural biomarkers...</h2>
+                    <span id="q-domain" class="font-mono text-[10px] text-safetyOrange uppercase tracking-widest block mb-2">Analyzing...</span>
+                    <h2 id="q-text" class="text-3xl font-bold leading-tight">Understanding your sleep patterns...</h2>
                 </div>
                 <div id="q-options" class="grid gap-4"></div>
             </div>
@@ -189,9 +211,9 @@
                 <div class="screw top-4 left-4"></div><div class="screw top-4 right-4"></div>
                 <div class="screw bottom-4 left-4"></div><div class="screw bottom-4 right-4"></div>
 
-                <h3 class="font-mono text-[10px] opacity-50 mb-6 uppercase">Neuro-Chronobiological_Report</h3>
+                <h3 class="font-mono text-[10px] opacity-50 mb-6 uppercase">Your Sleep Report</h3>
                 <div class="mb-10">
-                    <span class="font-mono text-[10px] text-safetyOrange uppercase tracking-widest block mb-1">Lucid_Arousal_Index</span>
+                    <span class="font-mono text-[10px] text-safetyOrange uppercase tracking-widest block mb-1">Dream Score</span>
                     <div id="lri-display" class="text-8xl font-bold font-mono tracking-tighter">0%</div>
                 </div>
 
@@ -200,22 +222,22 @@
 
             <div class="flex flex-col gap-8">
                 <div>
-                    <h2 class="text-4xl font-bold mb-6 leading-tight">Homeostatic Sleep Drive Compromised.</h2>
-                    <p class="text-primaryText/70 leading-relaxed text-lg">The engine has identified critical veto variables. A 90-day stabilization protocol is mandatory to achieve prefrontal reactivation during REM cycles.</p>
+                    <h2 class="text-4xl font-bold mb-6 leading-tight">Sleep Quality Needs Improvement.</h2>
+                    <p class="text-primaryText/70 leading-relaxed text-lg">We've identified a few things that are holding your dreams back. A 90-day plan is recommended to help you achieve better, more vivid dreaming.</p>
                 </div>
 
                 <div class="bolted-module p-10 bg-chassis">
                     <div class="flex justify-between items-center mb-8">
                         <div>
-                            <span class="font-mono text-[10px] uppercase tracking-widest block opacity-50">90_Day_Full_Access</span>
-                            <span class="text-sm font-bold">Clinical Consistency Guarantee</span>
+                            <span class="font-mono text-[10px] uppercase tracking-widest block opacity-50">90-Day Access</span>
+                            <span class="text-sm font-bold">100% Satisfaction Guarantee</span>
                         </div>
                         <span class="text-5xl font-bold font-mono">$50.00</span>
                     </div>
                     <button onclick="unlockDashboard()" class="w-full py-6 neumorph-card rounded-2xl font-bold text-sm uppercase tracking-widest hover:shadow-pressed active:translate-y-[2px] transition-all">
-                        Initialize Sovereign Protocol
+                        Start Your 90-Day Plan
                     </button>
-                    <p class="font-mono text-[9px] opacity-40 text-center mt-6">STRICT 90-DAY COMPLIANCE REQUIRED FOR WARRANTY ACTIVATION.</p>
+                    <p class="font-mono text-[9px] opacity-40 text-center mt-6">FULL 90-DAY COMMITMENT REQUIRED FOR GUARANTEE.</p>
                 </div>
             </div>
         </div>
@@ -226,12 +248,12 @@
         <div class="w-full max-w-[1400px]">
             <header class="flex justify-between items-end mb-16">
                 <div>
-                    <h1 class="text-6xl font-bold tracking-tighter">Sovereign_Mind_Dashboard.</h1>
-                    <p class="font-mono text-[11px] opacity-50 mt-4 uppercase">Subject_001 // Protocol_Day: <span id="current-day-label">01</span> / 90 // Status: <span class="text-safetyOrange">Phase_Locked</span></p>
+                    <h1 class="text-6xl font-bold tracking-tighter">Your Dream Dashboard.</h1>
+                    <p class="font-mono text-[11px] opacity-50 mt-4 uppercase">User_001 // Day: <span id="current-day-label">01</span> / 90 // Status: <span class="text-safetyOrange">Plan Active</span></p>
                 </div>
                 <div class="bolted-module px-8 py-5 flex items-center gap-5">
                     <div class="led-indicator led-active animate-pulse"></div>
-                    <span class="font-mono text-[11px] uppercase tracking-widest">Neural_Sync: Optimal</span>
+                    <span class="font-mono text-[11px] uppercase tracking-widest">System Status: Optimal</span>
                 </div>
             </header>
 
@@ -239,7 +261,7 @@
                 <!-- 90-Day Heatmap Panel -->
                 <div class="xl:col-span-1 bolted-module p-8">
                     <div class="flex justify-between items-center mb-8">
-                        <span class="font-mono text-[11px] uppercase tracking-widest">90_Day_Compliance_Matrix</span>
+                        <span class="font-mono text-[11px] uppercase tracking-widest">90-Day Progress</span>
                         <div class="vent-slot"></div>
                     </div>
                     <div id="heatmap-grid">
@@ -247,7 +269,7 @@
                     </div>
                     <div class="mt-8 pt-8 border-t border-shadow/20">
                         <div class="flex justify-between font-mono text-[10px] opacity-50 uppercase">
-                            <span>Compliance_Rate</span>
+                            <span>Completion Rate</span>
                             <span id="compliance-pct">0%</span>
                         </div>
                     </div>
@@ -255,21 +277,26 @@
 
                 <!-- Habit Modules -->
                 <div id="habit-cards-container" class="xl:col-span-3 grid md:grid-cols-2 gap-10">
-                    <!-- 4 Ph.D. modules injected via JS -->
+                    <!-- 4 modules injected via JS -->
                 </div>
             </div>
 
             <footer class="mt-32 flex flex-col items-center gap-6">
                 <button id="eject-button" onclick="handleEmergencyEject()" class="px-16 py-8 bolted-module font-bold text-safetyOrange hover:text-safetyOrange/80 transition-all uppercase tracking-[0.3em] text-xs hover:shadow-pressed active:translate-y-[2px]">
-                    [ Emergency_Eject / Refund_Protocol ]
+                    [ End Plan / Refund ]
                 </button>
-                <p class="font-mono text-[9px] opacity-30 uppercase tracking-[0.2em]">Sovereign_Mind_Vault // Encrypted_Data_Persistence</p>
+                <p class="font-mono text-[9px] opacity-30 uppercase tracking-[0.2em]">Secure Data Vault // Protected Persistence</p>
             </footer>
         </div>
     </section>
 
     <div id="crt-overlay" class="crt-overlay">
-        <div id="crt-content" class="crt-text whitespace-pre-wrap text-xl"></div>
+        <div class="flex justify-between items-start w-full max-w-4xl mx-auto">
+            <div id="crt-content" class="crt-text whitespace-pre-wrap text-xl"></div>
+            <button onclick="closeCRT()" id="crt-close" class="hidden font-mono text-xs border border-[#33ff33] px-4 py-2 hover:bg-[#33ff33] hover:text-black transition-all">
+                [ RETURN_TO_DASHBOARD ]
+            </button>
+        </div>
     </div>
 
     <script src="db.js"></script>

@@ -1,6 +1,6 @@
 /**
  * SOVEREIGN MIND - Dashboard & UI Logic
- * PhD-Level Synthesis Implementation
+ * Simplified for Customer-Friendly Interface
  */
 
 const STATE = {
@@ -41,20 +41,29 @@ function showPhase(phase) {
     STATE.currentPhase = phase;
 }
 
-async function showCRT(text, duration = 3000) {
+async function showCRT(text, duration = 3000, showClose = false) {
     UI.crt.overlay.style.display = 'flex';
     UI.crt.content.textContent = '';
+    document.getElementById('crt-close').classList.toggle('hidden', !showClose);
+
     const lines = text.split('\n');
     for (let line of lines) {
         UI.crt.content.textContent += line + '\n';
-        await new Promise(r => setTimeout(r, 60));
+        await new Promise(r => setTimeout(r, 50));
     }
-    return new Promise(resolve => {
-        setTimeout(() => {
-            UI.crt.overlay.style.display = 'none';
-            resolve();
-        }, duration);
-    });
+
+    if (duration > 0) {
+        return new Promise(resolve => {
+            setTimeout(() => {
+                if (!showClose) UI.crt.overlay.style.display = 'none';
+                resolve();
+            }, duration);
+        });
+    }
+}
+
+function closeCRT() {
+    UI.crt.overlay.style.display = 'none';
 }
 
 // --- DIAGNOSTIC ---
@@ -65,7 +74,7 @@ function renderDiagnostic() {
         return;
     }
 
-    document.getElementById('q-domain').textContent = `DOMAIN_SCAN: ${q.domain}`;
+    document.getElementById('q-domain').textContent = `Step ${STATE.diagnosticStep + 1} of 4`;
     document.getElementById('q-text').textContent = q.question;
 
     const optionsContainer = document.getElementById('q-options');
@@ -98,7 +107,7 @@ function finalizeDiagnostic() {
         div.innerHTML = `
             <div class="w-2 h-2 rounded-full bg-safetyOrange led-glow"></div>
             <div>
-                <span class="font-mono text-[8px] opacity-40 uppercase block">${b.severity}_VETO</span>
+                <span class="font-mono text-[8px] opacity-40 uppercase block">Recommendation</span>
                 <span class="font-bold text-xs uppercase">${b.label}</span>
             </div>
         `;
@@ -109,14 +118,13 @@ function finalizeDiagnostic() {
 }
 
 async function unlockDashboard() {
-    const text = `> INITIALIZING NEURO-CHRONOTYPE_HANDSHAKE...
-> QUANTIZING CHOLINERGIC_SEROTONERGIC_AXIS...
-> CALIBRATING T-MIN COEFFICIENT...
-> ENFORCING 90-DAY PROTOCOL_LOCK...
-> GENERATING CAUSAL_SYNERGY_MATRIX...
-> ACCESS_GRANTED. WELCOME SUBJECT_001.`;
+    const text = `> PREPARING YOUR CUSTOM PLAN...
+> OPTIMIZING DREAM WINDOWS...
+> BUILDING 90-DAY JOURNEY...
+> SECURING YOUR DATA...
+> READY. WELCOME TO SOVEREIGN MIND.`;
 
-    await showCRT(text, 4000);
+    await showCRT(text, 3000);
 
     STATE.protocol = NeuroEngine.generateProtocol(STATE.results.activeBlockers, STATE.responses);
     await window.SovereignVault.set('protocol', STATE.protocol);
@@ -153,7 +161,7 @@ function render90DayHeatmap(currentDay) {
 
         if (completedCount > 0) totalCompleted += (completedCount / 4);
 
-        square.className = 'aspect-square rounded-sm transition-all duration-300';
+        square.className = 'aspect-square rounded-sm transition-all duration-300 cursor-pointer hover:scale-110';
 
         if (percent === 100) {
             square.className += ' bg-safetyOrange shadow-led-glow';
@@ -170,6 +178,7 @@ function render90DayHeatmap(currentDay) {
             square.classList.add('animate-pulse');
         }
 
+        square.onclick = () => showDayDiagnostic(i, log);
         grid.appendChild(square);
     }
 
@@ -177,60 +186,109 @@ function render90DayHeatmap(currentDay) {
     document.getElementById('compliance-pct').textContent = `${Math.round(compliancePct)}%`;
 }
 
+async function showDayDiagnostic(day, log) {
+    const completed = Object.keys(log).length;
+    const text = `> DIAGNOSTIC REPORT: DAY ${day}
+> STATUS: ${completed === 4 ? 'OPTIMAL' : (completed > 0 ? 'PARTIAL' : 'NO_DATA')}
+> COMPLETION: ${Math.round((completed/4)*100)}%
+
+> LOGGED_HABITS:
+${STATE.protocol.targetHabits.map(h => `- ${h.title}: ${log[h.id] ? '[OK]' : '[MISSING]'}`).join('\n')}
+
+> ANALYSIS:
+${completed === 4 ? 'Neuroplasticity window maximized.' : 'Sub-optimal engagement detected.'}`;
+
+    await showCRT(text, 0, true);
+}
+
 function renderHabitCards() {
     const container = document.getElementById('habit-cards-container');
     container.innerHTML = '';
 
+    const startDate = new Date(STATE.protocol.startDate);
+    const today = new Date();
+    const currentDay = Math.ceil(Math.abs(today - startDate) / (1000 * 60 * 60 * 24)) || 1;
+
     STATE.protocol.targetHabits.forEach(habit => {
         const card = document.createElement('div');
-        card.className = 'bolted-module p-8';
+        card.className = 'bolted-module p-8 relative overflow-hidden';
 
-        const { isLocked, status, label } = checkTimeLock(habit.target_time);
+        const isLogged = STATE.protocol.dailyLogs[currentDay]?.[habit.id];
+        const { isLocked, status, label } = isLogged ?
+            { isLocked: true, status: 'ACTIVE', label: 'LOGGED' } :
+            checkTimeLock(habit.target_time);
 
         card.innerHTML = `
-            <div class="screw top-3 left-3"></div>
-            <div class="screw top-3 right-3"></div>
-            <div class="flex justify-between items-start mb-6">
-                <div>
-                    <span class="font-mono text-[9px] opacity-40 uppercase block">NEURO_MODULE</span>
-                    <h4 class="text-xl font-bold uppercase tracking-tight">${habit.title}</h4>
+            <!-- Physical Details -->
+            <div class="screw top-4 left-4"></div>
+            <div class="screw top-4 right-4"></div>
+            <div class="screw bottom-4 left-4"></div>
+            <div class="screw bottom-4 right-4"></div>
+
+            <div class="absolute right-10 top-10 flex gap-1 opacity-20">
+                <div class="vent-slot"></div><div class="vent-slot"></div><div class="vent-slot"></div>
+            </div>
+
+            <div class="flex justify-between items-start mb-10 mt-4">
+                <div class="relative tooltip-trigger">
+                    <span class="font-mono text-[9px] opacity-40 uppercase block tracking-tighter">Module // ${habit.id.toUpperCase()}</span>
+                    <h4 class="text-2xl font-bold uppercase tracking-tighter text-primaryText">${habit.title}</h4>
+                    <div class="tooltip-box">${habit.desc}</div>
                 </div>
                 <div class="flex flex-col items-end">
-                    <span class="font-mono text-[10px] text-safetyOrange font-bold">${habit.target_time}</span>
-                    <span class="font-mono text-[8px] opacity-40 uppercase">T-MIN_TARGET</span>
+                    <span class="font-mono text-[12px] text-safetyOrange font-bold">${habit.target_time}</span>
+                    <span class="font-mono text-[8px] opacity-40 uppercase">Target_Window</span>
                 </div>
             </div>
 
-            <div class="flex justify-between items-center mb-8">
-                <div class="flex gap-1">
-                    <div class="vent-slot"></div><div class="vent-slot"></div><div class="vent-slot"></div>
-                </div>
-                <div class="font-mono text-xs">
-                    <span class="opacity-40">SEQ:</span> ${String(habit.streak || 0).padStart(2, '0')} DAYS
-                </div>
+            <div class="mb-10 p-4 neumorph-sunken rounded-xl flex justify-between items-center">
+                <div class="font-mono text-[10px] uppercase opacity-60">Sequence_Streak</div>
+                <div class="font-mono text-lg font-bold">${String(habit.streak || 0).padStart(2, '0')} <span class="text-[10px] opacity-40">DAYS</span></div>
             </div>
 
             <button
                 onclick="logHabit('${habit.id}')"
-                class="w-full py-5 rounded-xl font-mono text-xs uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-3
-                ${isLocked ? 'neumorph-sunken text-primaryText/30 cursor-not-allowed' : 'neumorph-card text-primaryText hover:shadow-pressed active:translate-y-[2px]'}">
+                class="w-full py-6 rounded-2xl font-mono text-[11px] font-bold uppercase tracking-[0.3em] transition-all flex items-center justify-center gap-4
+                ${isLocked ? 'neumorph-sunken text-primaryText/20 cursor-not-allowed' : 'neumorph-card text-primaryText hover:shadow-pressed active:translate-y-[2px]'}">
                 <div class="led-indicator ${status === 'ACTIVE' ? 'led-active animate-pulse' : (status === 'LOCKED' ? '' : 'led-fail')}"></div>
-                [${label}]
+                [${label === 'ENGAGE' ? 'I DID THIS' : label}]
             </button>
+
+            <div class="mt-6 flex justify-between items-center font-mono text-[8px] opacity-20 uppercase tracking-widest">
+                <span>Ref_ID: SM-0${Math.floor(Math.random()*900)+100}</span>
+                <span>Type: Industrial_Realism_v9</span>
+            </div>
         `;
         container.appendChild(card);
     });
 }
 
 function checkTimeLock(targetTime) {
-    const [tHour] = targetTime.split(':').map(Number);
+    const [tHour, tMin] = targetTime.split(':').map(Number);
     const now = new Date();
-    const h = now.getHours();
-    const diff = h - tHour;
 
-    if (Math.abs(diff) <= 2) {
+    const todayTarget = new Date(now);
+    todayTarget.setHours(tHour, tMin, 0, 0);
+
+    const yesterdayTarget = new Date(todayTarget);
+    yesterdayTarget.setDate(yesterdayTarget.getDate() - 1);
+
+    const diffMinsToday = (now - todayTarget) / (1000 * 60);
+    const diffMinsYesterday = (now - yesterdayTarget) / (1000 * 60);
+
+    // Use whichever is closer to now
+    const diffMins = Math.abs(diffMinsToday) < Math.abs(diffMinsYesterday) ? diffMinsToday : diffMinsYesterday;
+
+    // ACTIVE: 20 mins before to 4 hours after
+    if (diffMins >= -20 && diffMins <= 240) {
         return { isLocked: false, status: 'ACTIVE', label: 'ENGAGE' };
-    } else {
+    }
+    // FAIL: Permanently lock if more than 4 hours missed
+    else if (diffMins > 240) {
+        return { isLocked: true, status: 'FAIL', label: 'SYS_FAIL' };
+    }
+    // OFFLINE: More than 20 mins before
+    else {
         return { isLocked: true, status: 'LOCKED', label: 'OFFLINE' };
     }
 }
@@ -260,17 +318,15 @@ async function handleEmergencyEject() {
     const diffDays = Math.ceil(Math.abs(today - startDate) / (1000 * 60 * 60 * 24)) || 1;
 
     if (diffDays < 90) {
-        await showCRT(`ERROR: PROTOCOL_INCOMPLETE.
-GUARANTEE_WINDOW: 90 DAYS.
+        await showCRT(`OOPS! PLAN NOT COMPLETE.
+YOU ARE ON DAY: ${diffDays} OF 90.
 REMAINING: ${90 - diffDays} DAYS.
-CONSISTENCY_CHECK: FAILED.
-SYSTEM_LOCK: ACTIVE.`, 5000);
+PLEASE FINISH THE PLAN TO BE ELIGIBLE FOR A REFUND.`, 5000);
     } else {
-        await showCRT(`> INITIATING SOMNOLOGICAL_DUMP...
-> ENCRYPTING CAUSAL_BIOMARKERS...
-> STRINGIFYING NEURO-CHRONOTYPE_LOGS...
-> GENERATING COMPLIANCE_HASH...
-> DUMP COMPLETE.`, 4500);
+        await showCRT(`> PREPARING YOUR DATA...
+> SAVING YOUR PROGRESS...
+> FINALIZING EXPORT...
+> DONE.`, 4000);
         generateComplianceHash();
     }
 }
@@ -281,10 +337,10 @@ function generateComplianceHash() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'Sovereign_Compliance_90_Day.key';
+    a.download = 'Dream_Compliance_Log.key';
     a.click();
-    showCRT(`SYSTEM DUMP COMPLETE. EMAIL .KEY FILE TO SUPPORT.
-WARNING: COMPLIANCE UNDER 95% VOIDS GUARANTEE WARRANTY.`, 8000);
+    showCRT(`EXPORT COMPLETE. PLEASE EMAIL THIS FILE TO SUPPORT.
+REMEMBER: CONSISTENCY IS KEY FOR THE GUARANTEE!`, 8000);
 }
 
 window.onload = init;
