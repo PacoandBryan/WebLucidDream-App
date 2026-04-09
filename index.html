@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SOVEREIGN MIND | Industrial Dashboard</title>
+    <title>SOVEREIGN MIND | Industrial Dashboard (90-Day)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -42,7 +42,6 @@
             position: relative;
         }
 
-        /* SVG Noise Texture Overlay */
         body::before {
             content: "";
             position: fixed;
@@ -65,11 +64,10 @@
             display: flex;
         }
 
-        /* CRT Terminal Overlay */
         .crt-overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(18, 16, 16, 0.9);
+            background: rgba(18, 16, 16, 0.95);
             z-index: 10000;
             display: none;
             flex-direction: column;
@@ -132,32 +130,9 @@
             box-shadow: inset 1px 1px 2px #babecc, inset -1px -1px 2px #ffffff;
         }
 
-        /* Neumorphic Helpers */
         .neumorph-card { box-shadow: 8px 8px 16px #babecc, -8px -8px 16px #ffffff; }
         .neumorph-sunken { box-shadow: inset 4px 4px 8px #babecc, inset -4px -4px 8px #ffffff; }
         .neumorph-pressed { box-shadow: inset 6px 6px 12px #babecc, inset -6px -6px 12px #ffffff; }
-
-        input[type="range"] {
-            -webkit-appearance: none;
-            background: transparent;
-        }
-        input[type="range"]::-webkit-slider-runnable-track {
-            width: 100%;
-            height: 8px;
-            background: #d1d9e6;
-            border-radius: 4px;
-            box-shadow: inset 2px 2px 4px #babecc, inset -2px -2px 4px #ffffff;
-        }
-        input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            height: 24px;
-            width: 24px;
-            border-radius: 50%;
-            background: #e0e5ec;
-            margin-top: -8px;
-            box-shadow: 2px 2px 5px #babecc, -2px -2px 5px #ffffff;
-            cursor: pointer;
-        }
 
         .led-indicator {
             width: 8px;
@@ -181,8 +156,8 @@
     <!-- PHASE 1: DIAGNOSTIC -->
     <section id="phase-diagnostic" class="phase active">
         <header class="w-full max-w-4xl flex justify-between items-center mb-12">
-            <div class="font-mono text-xs tracking-tighter uppercase opacity-50">Sovereign_Mind // Initial_Diagnostic</div>
-            <div class="font-mono text-xs tracking-tighter uppercase opacity-50">V7.0_CALIBRATION</div>
+            <div class="font-mono text-[10px] tracking-tighter uppercase opacity-50">Sovereign_Mind // Ph.D._Somnology_Scan</div>
+            <div class="font-mono text-[10px] tracking-tighter uppercase opacity-50">V9.0_MASTER_SYNTHESIS</div>
         </header>
 
         <div class="w-full max-w-2xl bolted-module p-12">
@@ -200,49 +175,47 @@
             <div id="diagnostic-content">
                 <div class="mb-8">
                     <span id="q-domain" class="font-mono text-[10px] text-safetyOrange uppercase tracking-widest block mb-2">DOMAIN_SCANNING...</span>
-                    <h2 id="q-text" class="text-3xl font-bold leading-tight">Initializing neural handshake...</h2>
+                    <h2 id="q-text" class="text-3xl font-bold leading-tight">Quantizing neural biomarkers...</h2>
                 </div>
-
-                <div id="q-options" class="grid gap-4">
-                    <!-- Options injected via JS -->
-                </div>
+                <div id="q-options" class="grid gap-4"></div>
             </div>
         </div>
     </section>
 
     <!-- PHASE 2: PAYWALL -->
     <section id="phase-paywall" class="phase">
-        <div class="w-full max-w-5xl grid md:grid-cols-2 gap-12 items-center">
-            <div class="bolted-module p-10">
+        <div class="w-full max-w-6xl grid lg:grid-cols-2 gap-16 items-center">
+            <div class="bolted-module p-12">
                 <div class="screw top-4 left-4"></div><div class="screw top-4 right-4"></div>
                 <div class="screw bottom-4 left-4"></div><div class="screw bottom-4 right-4"></div>
 
-                <h3 class="font-mono text-xs opacity-50 mb-6 uppercase">System_Assessment_Report</h3>
-                <div class="mb-8">
-                    <span class="font-mono text-[10px] text-safetyOrange uppercase tracking-widest block mb-1">Lucid_Probability</span>
-                    <div id="lri-display" class="text-7xl font-bold font-mono">0.0%</div>
+                <h3 class="font-mono text-[10px] opacity-50 mb-6 uppercase">Neuro-Chronobiological_Report</h3>
+                <div class="mb-10">
+                    <span class="font-mono text-[10px] text-safetyOrange uppercase tracking-widest block mb-1">Lucid_Arousal_Index</span>
+                    <div id="lri-display" class="text-8xl font-bold font-mono tracking-tighter">0%</div>
                 </div>
 
-                <div id="blocker-list" class="space-y-4">
-                    <!-- Blockers injected via JS -->
-                </div>
+                <div id="blocker-list" class="space-y-4"></div>
             </div>
 
             <div class="flex flex-col gap-8">
                 <div>
-                    <h2 class="text-4xl font-bold mb-4">Neural Architecture Compromised.</h2>
-                    <p class="text-primaryText/70 leading-relaxed">Your REM cycles are currently suppressed by the detected variables. The Sovereign Dashboard requires a one-time cryptographic unlock to initialize the 30-day restoration protocol.</p>
+                    <h2 class="text-4xl font-bold mb-6 leading-tight">Homeostatic Sleep Drive Compromised.</h2>
+                    <p class="text-primaryText/70 leading-relaxed text-lg">The engine has identified critical veto variables. A 90-day stabilization protocol is mandatory to achieve prefrontal reactivation during REM cycles.</p>
                 </div>
 
-                <div class="bolted-module p-8 bg-chassis">
-                    <div class="flex justify-between items-center mb-6">
-                        <span class="font-mono text-xs uppercase tracking-widest">Protocol_Access_Fee</span>
-                        <span class="text-4xl font-bold font-mono">$50.00</span>
+                <div class="bolted-module p-10 bg-chassis">
+                    <div class="flex justify-between items-center mb-8">
+                        <div>
+                            <span class="font-mono text-[10px] uppercase tracking-widest block opacity-50">90_Day_Full_Access</span>
+                            <span class="text-sm font-bold">Clinical Consistency Guarantee</span>
+                        </div>
+                        <span class="text-5xl font-bold font-mono">$50.00</span>
                     </div>
-                    <button onclick="unlockDashboard()" class="w-full py-5 neumorph-card rounded-xl font-bold text-sm uppercase tracking-widest hover:shadow-pressed active:translate-y-[2px] transition-all">
-                        Unlock Sovereign Dashboard
+                    <button onclick="unlockDashboard()" class="w-full py-6 neumorph-card rounded-2xl font-bold text-sm uppercase tracking-widest hover:shadow-pressed active:translate-y-[2px] transition-all">
+                        Initialize Sovereign Protocol
                     </button>
-                    <p class="font-mono text-[9px] opacity-40 text-center mt-4">STRICT 90-DAY PROTOCOL ADHERENCE REQUIRED FOR GUARANTEE.</p>
+                    <p class="font-mono text-[9px] opacity-40 text-center mt-6">STRICT 90-DAY COMPLIANCE REQUIRED FOR WARRANTY ACTIVATION.</p>
                 </div>
             </div>
         </div>
@@ -250,49 +223,53 @@
 
     <!-- PHASE 3: DASHBOARD -->
     <section id="phase-dashboard" class="phase">
-        <div class="w-full max-w-7xl">
-            <header class="flex justify-between items-end mb-12">
+        <div class="w-full max-w-[1400px]">
+            <header class="flex justify-between items-end mb-16">
                 <div>
-                    <h1 class="text-5xl font-bold tracking-tighter">Sovereign_Dashboard.</h1>
-                    <p class="font-mono text-xs opacity-50 mt-2 uppercase">Subject_001 // Protocol_Day: <span id="current-day-label">01</span></p>
+                    <h1 class="text-6xl font-bold tracking-tighter">Sovereign_Mind_Dashboard.</h1>
+                    <p class="font-mono text-[11px] opacity-50 mt-4 uppercase">Subject_001 // Protocol_Day: <span id="current-day-label">01</span> / 90 // Status: <span class="text-safetyOrange">Phase_Locked</span></p>
                 </div>
-                <div class="flex gap-4">
-                    <div class="bolted-module px-6 py-4 flex items-center gap-4">
-                        <div class="led-indicator led-active animate-pulse"></div>
-                        <span class="font-mono text-[10px] uppercase">Neural_Link: Stable</span>
-                    </div>
+                <div class="bolted-module px-8 py-5 flex items-center gap-5">
+                    <div class="led-indicator led-active animate-pulse"></div>
+                    <span class="font-mono text-[11px] uppercase tracking-widest">Neural_Sync: Optimal</span>
                 </div>
             </header>
 
-            <div class="grid lg:grid-cols-4 gap-8">
-                <!-- 30-Day Heatmap Panel -->
-                <div class="lg:col-span-1 bolted-module p-6">
-                    <div class="flex justify-between items-center mb-6">
-                        <span class="font-mono text-[10px] uppercase tracking-widest">30_Day_Compliance</span>
+            <div class="grid xl:grid-cols-4 gap-12">
+                <!-- 90-Day Heatmap Panel -->
+                <div class="xl:col-span-1 bolted-module p-8">
+                    <div class="flex justify-between items-center mb-8">
+                        <span class="font-mono text-[11px] uppercase tracking-widest">90_Day_Compliance_Matrix</span>
                         <div class="vent-slot"></div>
                     </div>
-                    <div id="heatmap-grid" class="grid grid-cols-5 gap-3">
-                        <!-- 30 Recessed squares injected via JS -->
+                    <div id="heatmap-grid">
+                        <!-- 90 squares injected via JS -->
+                    </div>
+                    <div class="mt-8 pt-8 border-t border-shadow/20">
+                        <div class="flex justify-between font-mono text-[10px] opacity-50 uppercase">
+                            <span>Compliance_Rate</span>
+                            <span id="compliance-pct">0%</span>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Habit Cards Area -->
-                <div id="habit-cards-container" class="lg:col-span-3 grid md:grid-cols-2 gap-8">
-                    <!-- 4 Habit modules injected via JS -->
+                <!-- Habit Modules -->
+                <div id="habit-cards-container" class="xl:col-span-3 grid md:grid-cols-2 gap-10">
+                    <!-- 4 Ph.D. modules injected via JS -->
                 </div>
             </div>
 
-            <footer class="mt-24 flex justify-center">
-                <button id="eject-button" onclick="handleEmergencyEject()" class="px-12 py-6 bolted-module font-bold text-safetyOrange hover:text-safetyOrange/80 transition-all uppercase tracking-[0.2em] text-sm hover:shadow-pressed active:translate-y-[2px]">
-                    [ Emergency Eject / Refund ]
+            <footer class="mt-32 flex flex-col items-center gap-6">
+                <button id="eject-button" onclick="handleEmergencyEject()" class="px-16 py-8 bolted-module font-bold text-safetyOrange hover:text-safetyOrange/80 transition-all uppercase tracking-[0.3em] text-xs hover:shadow-pressed active:translate-y-[2px]">
+                    [ Emergency_Eject / Refund_Protocol ]
                 </button>
+                <p class="font-mono text-[9px] opacity-30 uppercase tracking-[0.2em]">Sovereign_Mind_Vault // Encrypted_Data_Persistence</p>
             </footer>
         </div>
     </section>
 
-    <!-- LOADING / CRT OVERLAY -->
     <div id="crt-overlay" class="crt-overlay">
-        <div id="crt-content" class="crt-text whitespace-pre-wrap text-lg"></div>
+        <div id="crt-content" class="crt-text whitespace-pre-wrap text-xl"></div>
     </div>
 
     <script src="db.js"></script>

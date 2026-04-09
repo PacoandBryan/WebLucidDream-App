@@ -1,130 +1,125 @@
 /**
- * NEURO-CHRONOTYPE ENGINE v3.0
- * Third Iteration: Final High-Fidelity Logic & Industrial Mapping
+ * NEURO-CHRONOTYPE ENGINE v9.0 - "THE SOMNOLOGIST'S SYNTHESIS"
+ * PhD-Level Logic based on Causal Biomarkers and Pharmacological Synergies.
  */
 
 const NeuroEngine = {
+    // Sector 1-4 Master Variable Weights (Simplified for JS Engine)
+    weights: {
+        galantamine_8mg: 4.46,
+        galantamine_4mg: 2.29,
+        vitamin_b6: 0.64,
+        thc_high_dose: -0.85,
+        ethanol_high_dose: -0.75,
+        blue_light: -0.55,
+        social_jetlag: -0.40,
+        recall_baseline: 0.90,
+        ssri_acute: -0.80,
+        wbtb_optimal: 3.50
+    },
+
     blockers: {
-        THC_ALCOHOL: { id: 'THC_ALCOHOL', label: 'REM-Suppressive Substances', severity: 'CRITICAL', fix: 'Neurochemical Reset' },
-        INSOMNIA_STRESS: { id: 'INSOMNIA_STRESS', label: 'Cortisol Hyper-Arousal', severity: 'HIGH', fix: 'Vagus Downregulation' },
-        VARIABLE_WAKE: { id: 'VARIABLE_WAKE', label: 'Circadian Fragmentation', severity: 'HIGH', fix: 'Circadian Anchoring' },
-        SSRI_TIMING: { id: 'SSRI_TIMING', label: 'Pharmacological Blockade', severity: 'MODERATE', fix: 'Med-Timing Calibration' },
-        ZERO_RECALL: { id: 'ZERO_RECALL', label: 'Oneiric Amnesia', severity: 'CRITICAL', fix: 'TPJ Activation' }
+        THC_ALCOHOL: { id: 'THC_ALCOHOL', label: 'REM-Suppressive Axis', severity: 'VETO', fix: 'Neurochemical Flush' },
+        SOCIAL_JETLAG: { id: 'SOCIAL_JETLAG', label: 'Circadian Phase Delay', severity: 'HIGH', fix: 'Phase Consistency' },
+        AMNESIC_GATING: { id: 'AMNESIC_GATING', label: 'Oneiric Memory Blockade', severity: 'HIGH', fix: 'B6 Scaffolding' },
+        STRESS_CORTISOL: { id: 'STRESS_CORTISOL', label: 'Autonomic Hyper-Arousal', severity: 'MODERATE', fix: 'Vagus Downreg' }
     },
 
     diagnosticFlow: [
         {
-            id: 'substance_use',
+            id: 'substance_veto',
             domain: 'NEUROCHEMICAL',
-            question: 'Do you consume THC or Alcohol within 4 hours of your sleep onset?',
+            question: 'Ethanol or THC (>10mg) intake within 4 hours of T-minus 0?',
             type: 'choice',
             options: [
-                { label: 'Frequently', value: 1.0, blocker: 'THC_ALCOHOL' },
-                { label: 'Occasionally', value: 0.5, blocker: 'THC_ALCOHOL' },
-                { label: 'Never', value: 0.0, blocker: null }
+                { label: 'Systemic / Nightly', value: 1.0, blocker: 'THC_ALCOHOL' },
+                { label: 'Sporadic', value: 0.5, blocker: 'THC_ALCOHOL' },
+                { label: 'Zero Compliance', value: 0.0, blocker: null }
             ]
         },
         {
-            id: 'wake_consistency',
+            id: 'circadian_drift',
             domain: 'CHRONOBIOLOGICAL',
-            question: 'How much does your wake-up time vary between weekdays and weekends?',
+            question: 'Social Jetlag: Shift in wake-time between work/free days?',
             type: 'choice',
             options: [
-                { label: '> 2 Hours', value: 1.0, blocker: 'VARIABLE_WAKE' },
-                { label: '1 - 2 Hours', value: 0.5, blocker: 'VARIABLE_WAKE' },
-                { label: '< 30 Mins', value: 0.0, blocker: null }
+                { label: '> 120 mins', value: 1.0, blocker: 'SOCIAL_JETLAG' },
+                { label: '60 - 120 mins', value: 0.6, blocker: 'SOCIAL_JETLAG' },
+                { label: '< 30 mins', value: 0.0, blocker: null }
             ]
         },
         {
-            id: 'sleep_latency',
-            domain: 'CHRONOBIOLOGICAL',
-            question: 'Do you experience "Racing Thoughts" when attempting to initiate sleep?',
-            type: 'choice',
-            options: [
-                { label: 'Every Night', value: 1.0, blocker: 'INSOMNIA_STRESS' },
-                { label: 'Sometimes', value: 0.5, blocker: 'INSOMNIA_STRESS' },
-                { label: 'Rarely', value: 0.0, blocker: null }
-            ]
-        },
-        {
-            id: 'dream_recall_rate',
+            id: 'mnemonic_base',
             domain: 'METACOGNITIVE',
-            question: 'How many dreams have you recorded or remembered in the last 7 days?',
+            question: 'Dream Recall Frequency (7-day window)?',
             type: 'choice',
             options: [
-                { label: '0 Dreams', value: 1.0, blocker: 'ZERO_RECALL' },
-                { label: '1 - 2 Dreams', value: 0.5, blocker: 'ZERO_RECALL' },
-                { label: '3+ Dreams', value: 0.0, blocker: null }
+                { label: '0 Fragments', value: 1.0, blocker: 'AMNESIC_GATING' },
+                { label: '1-3 Fragments', value: 0.4, blocker: 'AMNESIC_GATING' },
+                { label: 'Daily Narrative', value: 0.0, blocker: null }
+            ]
+        },
+        {
+            id: 'light_hygiene',
+            domain: 'CHRONOBIOLOGICAL',
+            question: 'Blue light exposure (460nm) post-DLMO (9:00 PM)?',
+            type: 'choice',
+            options: [
+                { label: 'High (LED Unfiltered)', value: 0.8, blocker: null },
+                { label: 'Medium (Filtered)', value: 0.3, blocker: null },
+                { label: 'Total Dark Immersion', value: 0.0, blocker: null }
             ]
         }
     ],
 
     calculateResults(responses) {
         let activeBlockers = [];
-        let totalScore = 0;
+        let totalImpact = 0;
 
         this.diagnosticFlow.forEach(q => {
-            const selectedValue = responses[q.id];
-            const option = q.options.find(opt => opt.value === selectedValue);
-
-            if (option) {
-                totalScore += option.value;
-                if (option.blocker && option.value > 0) {
-                    activeBlockers.push({
-                        ...this.blockers[option.blocker],
-                        weight: option.value
-                    });
-                }
+            const val = responses[q.id];
+            const opt = q.options.find(o => o.value === val);
+            if (opt) {
+                totalImpact += opt.value;
+                if (opt.blocker) activeBlockers.push(this.blockers[opt.blocker]);
             }
         });
 
-        // Probability of success based on blockers
-        const probability = Math.max(0.05, 1 - (totalScore / this.diagnosticFlow.length));
+        // LRI Calculation: Base probability adjusted by impact
+        const probability = Math.max(0.04, 0.95 - (totalImpact / this.diagnosticFlow.length));
 
         return {
             probability,
             percent: Math.round(probability * 100),
-            activeBlockers: [...new Map(activeBlockers.map(item => [item.id, item])).values()]
+            activeBlockers: [...new Set(activeBlockers)]
         };
     },
 
-    generateProtocol(activeBlockers) {
+    generateProtocol(activeBlockers, responses) {
         const blockerIds = activeBlockers.map(b => b.id);
-        const habits = [];
-
-        // 1. Neurochemical Habit
-        if (blockerIds.includes('THC_ALCOHOL')) {
-            habits.push({ id: 'substance_curfew', title: 'Substance Veto', target_time: '20:00', streak: 0 });
-        } else {
-            habits.push({ id: 'caffeine_stop', title: 'Caffeine Hard-Stop', target_time: '14:00', streak: 0 });
-        }
-
-        // 2. Chronobiological Habit
-        if (blockerIds.includes('VARIABLE_WAKE')) {
-            habits.push({ id: 'wake_anchor', title: 'Wake-up Anchor', target_time: '07:00', streak: 0 });
-        } else {
-            habits.push({ id: 'solar_exposure', title: 'Solar Anchoring', target_time: '07:30', streak: 0 });
-        }
-
-        // 3. Metacognitive Habit
-        if (blockerIds.includes('ZERO_RECALL')) {
-            habits.push({ id: 'mnemonic_retention', title: 'Mnemonic Recall', target_time: '07:15', streak: 0 });
-        } else {
-            habits.push({ id: 'reality_calibration', title: 'Reality Check', target_time: '13:00', streak: 0 });
-        }
-
-        // 4. Autonomic Habit
-        if (blockerIds.includes('INSOMNIA_STRESS')) {
-            habits.push({ id: 'vagus_reset', title: 'Vagus Downreg', target_time: '21:30', streak: 0 });
-        } else {
-            habits.push({ id: 'digital_sunset', title: 'Digital Sunset', target_time: '22:00', streak: 0 });
-        }
-
-        return {
+        const protocol = {
             startDate: new Date().toISOString().split('T')[0],
-            targetHabits: habits,
-            dailyLogs: {}
+            targetHabits: [],
+            dailyLogs: {},
+            config: {
+                totalDays: 90,
+                phases: [
+                    { name: 'Physiological Reset', start: 1, end: 30 },
+                    { name: 'Cognitive Scaffolding', start: 31, end: 60 },
+                    { name: 'Cholinergic Synergy', start: 61, end: 90 }
+                ]
+            }
         };
+
+        // Standard 4-Habit Loadout for Phase 1
+        protocol.targetHabits = [
+            { id: 'substance_veto', title: 'Neurochemical Veto', target_time: '20:00', icon: 'bolt' },
+            { id: 'circadian_anchor', title: 'Circadian Anchor', target_time: '07:30', icon: 'sun' },
+            { id: 'recall_scaffold', title: 'Mnemonic Journal', target_time: '07:45', icon: 'pen' },
+            { id: 'digital_sunset', title: 'Blue Light Veto', target_time: '21:00', icon: 'moon' }
+        ];
+
+        return protocol;
     }
 };
 
