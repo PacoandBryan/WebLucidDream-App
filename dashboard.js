@@ -14,6 +14,7 @@ const STATE = {
 const UI = {
     phases: {
         DIAGNOSTIC: document.getElementById('phase-diagnostic'),
+        PREVIEW: document.getElementById('phase-preview'),
         PAYWALL: document.getElementById('phase-paywall'),
         DASHBOARD: document.getElementById('phase-dashboard')
     },
@@ -119,16 +120,81 @@ function renderDiagnostic() {
 function finalizeDiagnostic() {
     const results = NeuroEngine.calculateResults(STATE.responses);
     STATE.results = results;
+    STATE.protocol = NeuroEngine.generateProtocol(results);
 
-    document.getElementById('lri-display').textContent = `${results.percent}%`;
+    renderPlanPreview(results);
+    showPhase('PREVIEW');
+}
+
+function renderPlanPreview(results) {
+    document.getElementById('preview-success-rate').textContent = `${results.percent}%`;
+
+    // Deep Profile Analysis Injections
+    const profileContainer = document.getElementById('profile-breakdown');
+    profileContainer.innerHTML = '';
+
+    // Aggregate domain stats
+    const domainStats = {};
+    NeuroEngine.diagnosticFlow.forEach(q => {
+        if (!domainStats[q.domain]) domainStats[q.domain] = { count: 0, impact: 0 };
+        domainStats[q.domain].count++;
+
+        const selected = (q.options || []).find(o => o.value === STATE.responses[q.id]);
+        if (selected && selected.impact) {
+            domainStats[q.domain].impact += selected.impact;
+        }
+    });
+
+    Object.entries(domainStats).forEach(([domain, stats]) => {
+        const item = document.createElement('div');
+        item.className = 'flex flex-col gap-1';
+        const severity = stats.impact > 1 ? 'text-safetyOrange' : 'opacity-60';
+        item.innerHTML = `
+            <div class="flex justify-between items-center">
+                <span class="uppercase tracking-widest text-[9px]">${domain}</span>
+                <span class="${severity}">${stats.impact > 1 ? 'CRITICAL' : 'OPTIMAL'}</span>
+            </div>
+            <div class="w-full h-1 bg-muted neumorph-sunken relative overflow-hidden">
+                <div class="absolute h-full bg-safetyOrange transition-all duration-1000" style="width: ${Math.min(100, (stats.impact/2)*100)}%"></div>
+            </div>
+        `;
+        profileContainer.appendChild(item);
+    });
+
+    // Habit Preview Injections (Phased)
+    const habitContainer = document.getElementById('habit-preview-list');
+    habitContainer.innerHTML = '';
+    STATE.protocol.phases.forEach(phase => {
+        const phaseDiv = document.createElement('div');
+        phaseDiv.className = 'mb-4';
+        phaseDiv.innerHTML = `<h4 class="font-mono text-[9px] uppercase text-safetyOrange mb-2">${phase.title}</h4>`;
+
+        phase.habits.forEach(habit => {
+            const div = document.createElement('div');
+            div.className = 'p-3 neumorph-sunken rounded-xl mb-2';
+            div.innerHTML = `
+                <div class="flex justify-between items-center mb-1">
+                    <span class="font-bold text-[9px] uppercase">${habit.title}</span>
+                    <span class="font-mono text-[9px] text-safetyOrange">${habit.target_time}</span>
+                </div>
+                <p class="text-[8px] opacity-40 leading-tight">${habit.desc}</p>
+            `;
+            phaseDiv.appendChild(div);
+        });
+        habitContainer.appendChild(phaseDiv);
+    });
+}
+
+function proceedToPaywall() {
+    // Populate Paywall Data
+    document.getElementById('lri-display').textContent = `${STATE.results.percent}%`;
     const blockerList = document.getElementById('blocker-list');
     blockerList.innerHTML = '';
 
-    // Simplified list for paywall
     const items = [
-        { label: 'Circadian Drift', val: results.jetlag + 'h' },
-        { label: 'T-Min Calculation', val: results.tMin },
-        { label: 'Neuro-Load', val: results.useSupps ? 'Supps Opt-In' : 'Natural' }
+        { label: 'Circadian Drift', val: STATE.results.jetlag + 'h' },
+        { label: 'T-Min Calculation', val: STATE.results.tMin },
+        { label: 'Neuro-Load', val: STATE.results.useSupps ? 'Supps Opt-In' : 'Natural' }
     ];
 
     items.forEach(item => {
@@ -158,7 +224,7 @@ async function unlockDashboard() {
 
     await showCRT(text, 3000);
 
-    STATE.protocol = NeuroEngine.generateProtocol(STATE.results, STATE.responses);
+    // STATE.protocol is already generated in finalizeDiagnostic
     await window.SovereignVault.set('protocol', STATE.protocol);
 
     showPhase('DASHBOARD');
@@ -241,15 +307,22 @@ function renderHabitCards() {
     const today = new Date();
     const currentDay = Math.ceil(Math.abs(today - startDate) / (1000 * 60 * 60 * 24)) || 1;
 
-    // Dynamic Recovery Injection
-    const yesterdayLog = STATE.protocol.dailyLogs[currentDay - 1] || {};
-    const vetoOccurred = yesterdayLog['chem_curfew'] === false || yesterdayLog['digital_sunset'] === false;
+    // Determine current phase habits
+    let activeHabits = [];
+    STATE.protocol.phases.forEach(phase => {
+        if (currentDay >= phase.days[0] && currentDay <= phase.days[1]) {
+            activeHabits = [...activeHabits, ...phase.habits];
+        }
+    });
 
-    const habits = [...STATE.protocol.targetHabits];
-    const recovery = NeuroEngine.getRecoveryBranch(vetoOccurred);
-    if (recovery) habits.push(recovery);
+    // Always include foundation habits if not already included
+    STATE.protocol.phases[0].habits.forEach(h => {
+        if (!activeHabits.find(ah => ah.id === h.id)) {
+            activeHabits.push(h);
+        }
+    });
 
-    habits.forEach(habit => {
+    activeHabits.forEach(habit => {
         const card = document.createElement('div');
         card.className = `bolted-module p-8 relative overflow-hidden ${habit.tier === 3 ? 'border-2 border-safetyOrange/50' : ''}`;
 
@@ -442,6 +515,7 @@ async function saveDreamLog() {
 }
 
 window.onload = init;
+window.proceedToPaywall = proceedToPaywall;
 window.unlockDashboard = unlockDashboard;
 window.logHabit = logHabit;
 window.handleEmergencyEject = handleEmergencyEject;

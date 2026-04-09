@@ -204,6 +204,44 @@
         </div>
     </section>
 
+    <!-- PHASE 1.5: PLAN PREVIEW -->
+    <section id="phase-preview" class="phase">
+        <div class="w-full max-w-4xl">
+            <header class="flex justify-between items-center mb-12">
+                <div class="font-mono text-[10px] tracking-tighter uppercase opacity-50">Sovereign_Mind // Protocol Generation</div>
+                <div class="font-mono text-[10px] tracking-tighter uppercase opacity-50">ESTIMATED SUCCESS: <span id="preview-success-rate" class="text-safetyOrange">--%</span></div>
+            </header>
+
+            <div class="bolted-module p-12 mb-12">
+                <div class="screw top-4 left-4"></div><div class="screw top-4 right-4"></div>
+                <div class="screw bottom-4 left-4"></div><div class="screw bottom-4 right-4"></div>
+
+                <h2 class="text-4xl font-bold mb-8 tracking-tight">Your Personalized Protocol is Ready.</h2>
+
+                <div class="grid md:grid-cols-2 gap-12">
+                    <div>
+                        <h3 class="font-mono text-[10px] uppercase tracking-widest opacity-50 mb-4 text-safetyOrange">Deep Profile Analysis</h3>
+                        <div id="profile-breakdown" class="space-y-4 font-mono text-xs">
+                            <!-- Injected by JS -->
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="font-mono text-[10px] uppercase tracking-widest opacity-50 mb-4 text-safetyOrange">Computed 90-Day Habits</h3>
+                        <div id="habit-preview-list" class="space-y-4">
+                            <!-- Injected by JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-center">
+                <button onclick="proceedToPaywall()" class="px-16 py-8 bolted-module font-bold uppercase tracking-[0.3em] text-xs hover:shadow-pressed active:translate-y-[2px]">
+                    [ PROCEED TO DEPLOYMENT ]
+                </button>
+            </div>
+        </div>
+    </section>
+
     <!-- PHASE 2: PAYWALL -->
     <section id="phase-paywall" class="phase">
         <div class="w-full max-w-6xl grid lg:grid-cols-2 gap-16 items-center">
