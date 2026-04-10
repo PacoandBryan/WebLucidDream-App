@@ -1,0 +1,4 @@
+  File "/home/jules/verification/verify_v11.py", line 28
+    expect(preview_phase).to_have_class(/active/)
+                                        ^
+SyntaxError: invalid syntax

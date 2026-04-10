@@ -1,9 +1,9 @@
 function checkTimeLock(targetTime, now) {
     const [tHour, tMin] = targetTime.split(':').map(Number);
-
+    
     const todayTarget = new Date(now);
     todayTarget.setHours(tHour, tMin, 0, 0);
-
+    
     const yesterdayTarget = new Date(todayTarget);
     yesterdayTarget.setDate(yesterdayTarget.getDate() - 1);
 
@@ -14,7 +14,7 @@ function checkTimeLock(targetTime, now) {
 
     if (diffMins >= -20 && diffMins <= 240) {
         return { isLocked: false, status: 'ACTIVE', label: 'ENGAGE' };
-    }
+    } 
     else if (diffMins > 240) {
         return { isLocked: true, status: 'FAIL', label: 'SYS_FAIL' };
     }
@@ -37,7 +37,7 @@ cases.forEach(c => {
     const [h, m] = c.time.split(':').map(Number);
     now.setHours(h, m, 0, 0);
     if (c.nextDay) now.setDate(now.getDate() + 1);
-
+    
     const result = checkTimeLock(testTarget, now);
     console.log(`Time: ${c.time}, Locked: ${result.isLocked}, Label: ${result.label}`);
     if (result.isLocked !== c.expectedLocked || result.label !== c.expectedLabel) {
