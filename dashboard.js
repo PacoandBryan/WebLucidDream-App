@@ -221,7 +221,7 @@ function renderPlanPreview(results) {
     }
 }
 
-async function verifyAndUnlock() {
+async function verifyAndUnlock(fromFlow = false) {
     const keyInput = document.getElementById('license-key-input');
     const verifyBtn = document.getElementById('verify-btn');
     const key = keyInput.value.trim();
@@ -272,15 +272,11 @@ async function verifyAndUnlock() {
             await window.SovereignVault.set('license_verified', true);
             await window.SovereignVault.set('license_key', key);
             
-            // UNBLUR RESULTS
-            const blurContainer = document.getElementById('results-blur-container');
-            if (blurContainer) {
-                blurContainer.classList.remove('blur-md', 'pointer-events-none');
-                const overlay = blurContainer.querySelector('.bg-black/10');
-                if (overlay) overlay.remove();
+            if (fromFlow) {
+                showTimeSetup();
+            } else {
+                showProtocolPreview();
             }
-
-            showProtocolPreview();
         } else {
             throw new Error(data.message || "Invalid or expired License Key.");
         }
@@ -411,19 +407,26 @@ function render90DayHeatmap(currentDay) {
     grid.innerHTML = '';
     grid.className = 'grid grid-cols-10 gap-1'; 
 
-    let totalCompleted = 0;
+    const profile = window.SovereignStore.getProfile();
+    const complianceHistory = profile.Compliance_History || [];
 
     for (let i = 1; i <= 90; i++) {
         const square = document.createElement('div');
+        const isFullSuccess = complianceHistory.includes(i);
+
         const log = STATE.protocol.dailyLogs[i] || {};
-        const completedCount = Object.values(log).filter(v => v === true).length;
-        const percent = (completedCount / 4) * 100;
+        const missionLog = STATE.protocol.missionData ? (STATE.protocol.missionData[i] || {}) : {};
+
+        const completedHabits = Object.values(log).filter(v => v === true).length;
+        const completedMissions = Object.values(missionLog).filter(m => m.checked === true).length;
         
-        if (completedCount > 0) totalCompleted += (completedCount / 4);
+        const currentPhase = STATE.protocol.phases.find(p => i >= p.days[0] && i <= p.days[1]);
+        const totalPossible = (currentPhase?.habits.length || 0) + (STATE.protocol.dailyMissions[i - 1]?.steps.length || 0);
+        const percent = totalPossible > 0 ? ((completedHabits + completedMissions) / totalPossible) * 100 : 0;
 
         square.className = 'aspect-square rounded-sm transition-all duration-300 cursor-pointer hover:scale-110';
         
-        if (percent === 100) {
+        if (isFullSuccess) {
             square.className += ' bg-safetyOrange shadow-led-glow';
         } else if (percent > 0) {
             const opacity = 0.2 + (percent / 100) * 0.8;
@@ -442,7 +445,7 @@ function render90DayHeatmap(currentDay) {
         grid.appendChild(square);
     }
 
-    const compliancePct = (totalCompleted / 90) * 100;
+    const compliancePct = (complianceHistory.length / 90) * 100;
     document.getElementById('compliance-pct').textContent = `${Math.round(compliancePct)}%`;
 }
 
@@ -612,11 +615,28 @@ window.updateMissionData = async function(day, stepIdx, field, value) {
 
         if (!STATE.protocol.missionData[day][stepIdx].checked) {
             window.SovereignStore.addXP(100);
-            window.SovereignStore.updateStreak(true);
         }
     }
     
     STATE.protocol.missionData[day][stepIdx][field] = value;
+
+    // Check for full day completion to update streak
+    const logArray = Object.values(STATE.protocol.dailyLogs[day] || {});
+    const missionData = STATE.protocol.missionData[day] || {};
+    const missionArray = Object.values(missionData);
+    const currentPhase = STATE.protocol.phases.find(p => day >= p.days[0] && day <= p.days[1]);
+    const habitsDone = logArray.length >= (currentPhase?.habits.length || 0) && logArray.every(v => v === true);
+    const missionsDone = missionArray.length >= (STATE.protocol.dailyMissions[day - 1]?.steps.length || 0) && missionArray.every(m => m.checked === true);
+
+    if (habitsDone && missionsDone) {
+        if (!window.SovereignStore.getProfile().Compliance_History.includes(day)) {
+            window.SovereignStore.logCompliance(day, true);
+            window.SovereignStore.addXP(250);
+            window.SovereignStore.updateStreak(true);
+        }
+    } else {
+        window.SovereignStore.logCompliance(day, false);
+    }
     await window.SovereignVault.set('protocol', STATE.protocol);
     
     const startDate = new Date(STATE.protocol.startDate);
@@ -802,8 +822,8 @@ function checkTimeLock(targetTime) {
     // Use whichever is closer to now
     const diffMins = Math.abs(diffMinsToday) < Math.abs(diffMinsYesterday) ? diffMinsToday : diffMinsYesterday;
 
-    // ACTIVE: Exact 0 to 4 hours window
-    if (diffMins >= 0 && diffMins <= 240) {
+    // ACTIVE: Exact -20m to 4 hours window
+    if (diffMins >= -20 && diffMins <= 240) {
         return { isLocked: false, status: 'ACTIVE', label: 'ENGAGE' };
     } 
     // FAIL: Permanently lock if more than 4 hours missed
@@ -833,12 +853,22 @@ async function logHabit(habitId) {
 
     // Gamification System Rewards
     window.SovereignStore.addXP(100);
-    window.SovereignStore.updateStreak(true);
 
     const logArray = Object.values(STATE.protocol.dailyLogs[currentDay]);
-    if (logArray.length === 4 && logArray.every(v => v === true)) {
-        window.SovereignStore.logCompliance(currentDay, true);
-        window.SovereignStore.addXP(250); // Bonus for perfect day
+    const missionData = STATE.protocol.missionData[currentDay] || {};
+    const missionArray = Object.values(missionData);
+
+    // Check if ALL habits and ALL missions for the day are completed
+    const currentPhase = STATE.protocol.phases.find(p => currentDay >= p.days[0] && currentDay <= p.days[1]);
+    const habitsDone = logArray.length >= (currentPhase?.habits.length || 0) && logArray.every(v => v === true);
+    const missionsDone = missionArray.length >= (STATE.protocol.dailyMissions[currentDay - 1]?.steps.length || 0) && missionArray.every(m => m.checked === true);
+
+    if (habitsDone && missionsDone) {
+        if (!window.SovereignStore.getProfile().Compliance_History.includes(currentDay)) {
+            window.SovereignStore.logCompliance(currentDay, true);
+            window.SovereignStore.addXP(250); // Bonus for perfect day
+            window.SovereignStore.updateStreak(true);
+        }
     }
 
     await window.SovereignVault.set('protocol', STATE.protocol);
@@ -942,7 +972,13 @@ async function saveDreamLog() {
     const words = narrative.trim().split(/\s+/).filter(Boolean).length;
 
     if (!lucidity || words < 20) {
-        alert('MISSION FAILED: Lucidity and at least 20 words of narrative required.');
+        showCRT(`> ERROR: DATA LINK CORRUPTED.
+> REASON: MISSION DATA INSUFFICIENT.
+> MINIMUM_NARRATIVE: 20 WORDS REQUIRED.
+> CURRENT_COUNT: ${words} WORDS.
+> LUCIDITY_VALUE: REQUIRED.
+>
+> PLEASE RE-ENTER SUBCONSCIOUS DATA.`, 4000);
         return;
     }
 
