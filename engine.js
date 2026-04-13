@@ -358,11 +358,18 @@ const NeuroEngine = {
 
         const score = Math.max(2, Math.min(90, Math.round(98 - (totalImpact * 5))));
 
-        return {
+        const results = {
             percent: score,
             tMin: tMinStr,
             responses: responses
         };
+
+        // UI Metadata for Paywall
+        const consistency = responses.wake_consistency;
+        results.jetlag = consistency === 'HIGH' ? 0.5 : (consistency === 'MED' ? 1.5 : 2.5);
+        results.useSupps = responses.b6_supplementation !== 'NONE' || responses.magnesium_baseline === 'YES';
+
+        return results;
     },
 
     generateProtocol(results) {
@@ -387,18 +394,24 @@ const NeuroEngine = {
                 },
                 { 
                     id: 'priming', 
-                    title: 'Phase 2: Circadian Anchoring', 
+                    title: isVetoed ? 'Phase 2: REM Rebound Strategy' : 'Phase 2: Circadian Anchoring',
                     days: [31, 60],
-                    habits: [
+                    habits: isVetoed ? [
+                        { id: 'detox_compliance', tier: 2, title: 'Veto Compliance', target_time: '22:00', desc: 'Mandatory zero intake of REM suppressors.' },
+                        { id: 'anchor_wake', tier: 2, title: 'Circadian Anchor', target_time: r.wake_work_time || '07:00', desc: 'Strict ±45m wake variance to stabilize T-min.' }
+                    ] : [
                         { id: 'anchor_wake', tier: 2, title: 'Circadian Anchor', target_time: r.wake_work_time || '07:00', desc: 'Strict ±45m wake variance to stabilize T-min.' },
                         { id: 'prospective_memory', tier: 2, title: 'Intent Priming', target_time: '12:00', desc: 'Reality testing mapped to existing daily triggers.' }
                     ]
                 },
                 { 
                     id: 'induction', 
-                    title: 'Phase 3: ACh Super-Surge', 
+                    title: isVetoed ? 'Phase 3: Substrate Consolidation' : 'Phase 3: ACh Super-Surge',
                     days: [61, 90],
-                    habits: [
+                    habits: isVetoed ? [
+                        { id: 'magnesium_load', tier: 3, title: 'Neuro-Substrate Load', target_time: '22:30', desc: 'Glycine and Magnesium Threonate for deep sleep architectural repair.' },
+                        { id: 'fragment_log', tier: 3, title: 'Deep Fragment Ledger', target_time: '07:30', desc: 'Focus on capturing emotional residue from REM rebound.' }
+                    ] : [
                         { id: 'wbtb_intercept', tier: 3, title: 'Circadian Intercept', target_time: results.tMin, desc: 'Wake at T-min to maximize cholinergic REM density.' },
                         { id: 'induction_method', tier: 3, 
                           title: r.hypnagogic_patterns === 'HIGH' ? 'MILD Intensive' : 'SSILD Sensory Loop', 
@@ -462,26 +475,37 @@ const NeuroEngine = {
                 
             } else if (i <= 60) {
                 // Phase 2
-                header = "CIRCADIAN ANCHORING";
-                dayMissions.push({ time: "12:00", task: "Intent Priming: Reality test mapped to digital triggers (e.g. phone checks)." });
-                dayMissions.push({ time: "18:00", task: "Circadian Lock: Guard against social jetlag. Stabilize sleep/wake rhythm." });
+                header = isVetoed ? "REM REBOUND" : "CIRCADIAN ANCHORING";
+                if (isVetoed) {
+                    dayMissions.push({ time: "12:00", task: "Restorative Intent: Affirm your brain's natural ability to recover REM density." });
+                    dayMissions.push({ time: "18:00", task: "Veto Lock: Verification of zero substance intake for 45+ days." });
+                    dayMissions.push({ time: "22:00", task: "Detox Audit: Log any withdrawal symptoms or vividness spikes." });
+                } else {
+                    dayMissions.push({ time: "12:00", task: "Intent Priming: Reality test mapped to digital triggers (e.g. phone checks)." });
+                    dayMissions.push({ time: "18:00", task: "Circadian Lock: Guard against social jetlag. Stabilize sleep/wake rhythm." });
+                }
                 
-                if (i === 45) dayMissions.push({ time: "15:00", task: "Prospective Memory Target: Choose a specific object (e.g., a red car) and test upon seeing it."});
-                else if (i % 5 === 0) dayMissions.push({ time: "22:00", task: "Text Stability Check: Read text, look away, read again. Practice this."});
+                if (i === 45) dayMissions.push({ time: "15:00", task: isVetoed ? "Substrate Check: Ensure B6 and Magnesium levels are consistent." : "Prospective Memory Target: Choose a specific object (e.g., a red car) and test upon seeing it."});
+                else if (i % 5 === 0) dayMissions.push({ time: "22:00", task: isVetoed ? "Nightly Affirmation: 'My substrate is clear, my REM is deep.'" : "Text Stability Check: Read text, look away, read again. Practice this."});
                 else dayMissions.push({ time: "10:30", task: "Gravity Test: Pause and ask 'Does gravity feel normal here?'" });
 
             } else {
                 // Phase 3
-                header = "ACH SUPER-SURGE";
-                dayMissions.push({ time: "14:00", task: "Targeted Memory: 5 reality checks linked to emotional spikes." });
-                dayMissions.push({ time: tMin, task: `WBTB Intercept: Wake up at T-Min, stay alert for 15-45m without bright lights.` });
+                header = isVetoed ? "SUBSTRATE CONSOLIDATION" : "ACH SUPER-SURGE";
+                if (isVetoed) {
+                    dayMissions.push({ time: "14:00", task: "Subconscious Mapping: Log recurring dream themes from the last 60 days." });
+                    dayMissions.push({ time: "22:30", task: "Substrate Load: Take Magnesium Threonate and Glycine." });
+                } else {
+                    dayMissions.push({ time: "14:00", task: "Targeted Memory: 5 reality checks linked to emotional spikes." });
+                    dayMissions.push({ time: tMin, task: `WBTB Intercept: Wake up at T-Min, stay alert for 15-45m without bright lights.` });
+                }
                 
                 if (i === 61 || i % 3 === 0) {
-                    dayMissions.push({ time: "03:00", task: "MILD Intensive: Visualize your last dream during WBTB, re-entering with lucidity." });
+                    dayMissions.push({ time: "03:00", task: isVetoed ? "Deep Recall Audit: Review your dream ledger for pattern shifts." : "MILD Intensive: Visualize your last dream during WBTB, re-entering with lucidity." });
                 } else if (i === 90) {
-                    dayMissions.push({ time: "03:00", task: "The Sovereign Ascent: Full SSILD/WBTB stack. Tonight is the peak." });
+                    dayMissions.push({ time: "03:00", task: isVetoed ? "The Restorative Peak: Reflect on 90 days of substrate repair." : "The Sovereign Ascent: Full SSILD/WBTB stack. Tonight is the peak." });
                 } else {
-                    dayMissions.push({ time: "03:00", task: "Sensory Loop: Cycle through Sight, Sound, and Touch focus in the dark." });
+                    dayMissions.push({ time: "03:00", task: isVetoed ? "Emotional Capture: Log any strong feeling states upon waking." : "Sensory Loop: Cycle through Sight, Sound, and Touch focus in the dark." });
                 }
             }
 
