@@ -46,6 +46,12 @@ async function init() {
         // We have a protocol but needs license
         showPhase('PAYWALL');
     } else {
+        // Restore diagnostic progress if any
+        const savedResponses = localStorage.getItem('SV_diagnostic_responses');
+        const savedStep = localStorage.getItem('SV_diagnostic_step');
+        if (savedResponses) STATE.responses = JSON.parse(savedResponses);
+        if (savedStep) STATE.diagnosticStep = parseInt(savedStep);
+
         renderDiagnostic();
     }
 }
@@ -90,9 +96,18 @@ function renderDiagnostic() {
         return;
     }
 
+    // Save progress
+    localStorage.setItem('SV_diagnostic_responses', JSON.stringify(STATE.responses));
+    localStorage.setItem('SV_diagnostic_step', STATE.diagnosticStep);
+
     document.getElementById('q-domain').textContent = `Step ${STATE.diagnosticStep + 1} of ${NeuroEngine.diagnosticFlow.length}`;
     document.getElementById('q-text').textContent = q.question;
     
+    const prevBtn = document.getElementById('prev-q-btn');
+    if (prevBtn) {
+        prevBtn.classList.toggle('hidden', STATE.diagnosticStep === 0);
+    }
+
     const optionsContainer = document.getElementById('q-options');
     optionsContainer.innerHTML = '';
 
@@ -127,6 +142,10 @@ function renderDiagnostic() {
 }
 
 function finalizeDiagnostic() {
+    // Clear persistence
+    localStorage.removeItem('SV_diagnostic_responses');
+    localStorage.removeItem('SV_diagnostic_step');
+
     const results = NeuroEngine.calculateResults(STATE.responses);
     STATE.results = results;
     STATE.protocol = NeuroEngine.generateProtocol(results);
@@ -227,7 +246,7 @@ async function verifyAndUnlock() {
     const key = keyInput.value.trim();
 
     if (!key) {
-        alert("Please enter a valid License Key.");
+        showCRT("> [ SYSTEM ERROR ]\n> PLEASE ENTER A VALID LICENSE KEY.");
         return;
     }
 
@@ -594,6 +613,7 @@ window.updateMissionData = async function(day, stepIdx, field, value) {
         const currentNote = noteInput ? noteInput.value.trim() : STATE.protocol.missionData[day][stepIdx].note.trim();
         
         if (!currentNote) {
+            showCRT("> [ SYSTEM ERROR ]\n> DATA LOG NOTE REQUIRED TO COMMIT MISSION.");
             if (noteInput) {
                 noteInput.style.borderColor = '#ff4757';
                 noteInput.placeholder = '[ SYSTEM ERROR: DATA LOG REQUIRED TO FINISH MISSION ]';
@@ -611,7 +631,8 @@ window.updateMissionData = async function(day, stepIdx, field, value) {
         STATE.protocol.missionData[day][stepIdx].note = currentNote;
 
         if (!STATE.protocol.missionData[day][stepIdx].checked) {
-            window.SovereignStore.addXP(100);
+            const { leveledUp, profile } = window.SovereignStore.addXP(100);
+            if (leveledUp) triggerLevelUp(profile.Proficiency_Level);
             window.SovereignStore.updateStreak(true);
         }
     }
@@ -802,8 +823,8 @@ function checkTimeLock(targetTime) {
     // Use whichever is closer to now
     const diffMins = Math.abs(diffMinsToday) < Math.abs(diffMinsYesterday) ? diffMinsToday : diffMinsYesterday;
 
-    // ACTIVE: Exact 0 to 4 hours window
-    if (diffMins >= 0 && diffMins <= 240) {
+    // ACTIVE: Exact -20m to 4 hours window
+    if (diffMins >= -20 && diffMins <= 240) {
         return { isLocked: false, status: 'ACTIVE', label: 'ENGAGE' };
     } 
     // FAIL: Permanently lock if more than 4 hours missed
@@ -832,13 +853,15 @@ async function logHabit(habitId) {
     habit.streak = (habit.streak || 0) + 1;
 
     // Gamification System Rewards
-    window.SovereignStore.addXP(100);
+    const { leveledUp: l1, profile: p1 } = window.SovereignStore.addXP(100);
+    if (l1) triggerLevelUp(p1.Proficiency_Level);
     window.SovereignStore.updateStreak(true);
 
     const logArray = Object.values(STATE.protocol.dailyLogs[currentDay]);
     if (logArray.length === 4 && logArray.every(v => v === true)) {
         window.SovereignStore.logCompliance(currentDay, true);
-        window.SovereignStore.addXP(250); // Bonus for perfect day
+        const { leveledUp: l2, profile: p2 } = window.SovereignStore.addXP(250); // Bonus for perfect day
+        if (l2) triggerLevelUp(p2.Proficiency_Level);
     }
 
     await window.SovereignVault.set('protocol', STATE.protocol);
@@ -942,7 +965,7 @@ async function saveDreamLog() {
     const words = narrative.trim().split(/\s+/).filter(Boolean).length;
 
     if (!lucidity || words < 20) {
-        alert('MISSION FAILED: Lucidity and at least 20 words of narrative required.');
+        showCRT("> [ MISSION FAILED ]\n> LUCIDITY AND MINIMUM 20 WORDS REQUIRED.");
         return;
     }
 
@@ -954,7 +977,8 @@ async function saveDreamLog() {
     await window.SovereignVault.set('dreamLogs', STATE.dreamLogs);
 
     // Gamification Reward logic
-    window.SovereignStore.addXP(300); // Higher reward for doing the ledger
+    const { leveledUp, profile } = window.SovereignStore.addXP(300); // Higher reward for doing the ledger
+    if (leveledUp) triggerLevelUp(profile.Proficiency_Level);
 
     const rewards = [
         "> SUBCONSCIOUS INSIGHT: Your Phase-A REM latency is shortening.",
@@ -1037,13 +1061,9 @@ async function exportVault() {
         a.download = 'sovereign_mind_vault.enc';
         a.click();
         
-        if (typeof showCRT === 'function') {
-            await showCRT("> SYSTEM BACKUP SUCCESSFUL.\n> ENCRYPTED VAULT OFFLOADED.", 4000);
-        } else {
-            alert("Backup successful!");
-        }
+        await showCRT("> SYSTEM BACKUP SUCCESSFUL.\n> ENCRYPTED VAULT OFFLOADED.", 4000);
     } catch (e) {
-        alert("Encryption failed: " + e.message);
+        showCRT("> [ SYSTEM ERROR ]\n> ENCRYPTION FAILED: " + e.message.toUpperCase());
     }
 }
 
@@ -1078,10 +1098,10 @@ async function importVault() {
                     }
                 }
 
-                alert("Vault imported successfully. The system will now reload.");
+                await showCRT("> VAULT IMPORT SUCCESSFUL.\n> RELOADING SYSTEM...", 3000);
                 window.location.reload();
             } catch (err) {
-                alert("Decryption failed. Please verify your password and file integrity.");
+                showCRT("> [ SYSTEM ERROR ]\n> DECRYPTION FAILED. VERIFY SECURITY KEY.");
                 console.error(err);
             }
         };
@@ -1090,7 +1110,26 @@ async function importVault() {
     input.click();
 }
 
+function prevDiagnostic() {
+    if (STATE.diagnosticStep > 0) {
+        STATE.diagnosticStep--;
+        renderDiagnostic();
+    }
+}
+
+function triggerLevelUp(level) {
+    confetti({
+        particleCount: 200,
+        spread: 100,
+        origin: { y: 0.6 },
+        colors: ['#ff4757', '#33ff33', '#c084fc']
+    });
+
+    showCRT(`> [ EVOLUTION DETECTED ]\n> PROFICIENCY INCREASED TO LEVEL ${level}.\n> NEURAL PATHWAYS OPTIMIZED.`, 4000);
+}
+
 window.onload = init;
+window.prevDiagnostic = prevDiagnostic;
 window.proceedToPaywall = proceedToPaywall;
 window.showProtocolPreview = showProtocolPreview;
 window.showTimeSetup = showTimeSetup;
