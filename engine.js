@@ -358,9 +358,18 @@ const NeuroEngine = {
 
         const score = Math.max(2, Math.min(90, Math.round(98 - (totalImpact * 5))));
 
+        // Derive jetlag and useSupps for Paywall UI
+        const jetlagMap = { 'HIGH': '0.5', 'MED': '2', 'SEVERE': '4' };
+        const jetlag = jetlagMap[responses.wake_consistency] || '1';
+
+        const useSupps = responses.magnesium_baseline === 'YES' ||
+                         (responses.b6_supplementation && responses.b6_supplementation !== 'NONE');
+
         return {
             percent: score,
             tMin: tMinStr,
+            jetlag: jetlag,
+            useSupps: useSupps,
             responses: responses
         };
     },

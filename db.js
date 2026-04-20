@@ -133,9 +133,15 @@ window.SovereignStore = {
         const profile = this.getProfile();
         profile.User_XP += amount;
         const newLevel = Math.floor(profile.User_XP / 500) + 1;
-        if (newLevel > profile.Proficiency_Level) profile.Proficiency_Level = newLevel;
+
+        let leveledUp = false;
+        if (newLevel > profile.Proficiency_Level) {
+            profile.Proficiency_Level = newLevel;
+            leveledUp = true;
+        }
+
         this.set('profile', profile);
-        return profile;
+        return { profile, leveledUp };
     },
     updateStreak(isSuccess) {
         const profile = this.getProfile();
