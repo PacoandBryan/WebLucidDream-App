@@ -270,10 +270,15 @@
             <div class="screw bottom-4 left-4"></div>
             <div class="screw bottom-4 right-4"></div>
 
-            <div class="flex justify-end gap-1 mb-8">
-                <div class="vent-slot"></div>
-                <div class="vent-slot"></div>
-                <div class="vent-slot"></div>
+            <div class="flex justify-between items-center mb-8">
+                <div class="flex-grow mr-8 h-1 bg-muted neumorph-sunken relative overflow-hidden">
+                    <div id="diagnostic-progress-bar" class="absolute h-full bg-safetyOrange transition-all duration-500" style="width: 0%"></div>
+                </div>
+                <div class="flex gap-1">
+                    <div class="vent-slot"></div>
+                    <div class="vent-slot"></div>
+                    <div class="vent-slot"></div>
+                </div>
             </div>
 
             <div id="diagnostic-content">
@@ -416,9 +421,14 @@
                 <!-- Injected by JS -->
             </div>
 
-            <button onclick="unlockDashboard()" class="w-full py-6 neumorph-card rounded-2xl font-bold text-sm uppercase tracking-widest hover:shadow-pressed active:translate-y-[2px] transition-all">
-                [ DEPLOY TO DASHBOARD ]
-            </button>
+            <div class="flex gap-4">
+                <button onclick="showPhase('PREVIEW_2')" class="w-1/3 py-6 neumorph-card rounded-2xl font-bold text-[10px] uppercase tracking-widest opacity-50 hover:opacity-100 transition-all">
+                    [ BACK ]
+                </button>
+                <button onclick="unlockDashboard()" class="w-2/3 py-6 neumorph-card rounded-2xl font-bold text-sm uppercase tracking-widest hover:shadow-pressed active:translate-y-[2px] transition-all">
+                    [ DEPLOY TO DASHBOARD ]
+                </button>
+            </div>
         </div>
     </section>
 
@@ -639,7 +649,12 @@
             <div id="ledger-read-mode" class="hidden flex-grow overflow-y-auto custom-scrollbar p-8 flex flex-col">
                 <button onclick="showLedgerList()" class="self-start font-mono text-[9px] text-[#c084fc] hover:text-white uppercase mb-6">< RETURN TO LIST</button>
                 
-                <h3 id="ledger-read-date" class="text-xs font-mono opacity-50 mb-2"></h3>
+                <div class="flex justify-between items-start mb-2">
+                    <h3 id="ledger-read-date" class="text-xs font-mono opacity-50"></h3>
+                    <button onclick="deleteCurrentDreamLog()" class="font-mono text-[9px] text-safetyOrange hover:bg-safetyOrange hover:text-white px-2 py-1 border border-safetyOrange transition-all uppercase">
+                        [ DELETE LOG ]
+                    </button>
+                </div>
                 <div class="flex gap-4 mb-6 text-xs font-mono uppercase">
                     <span class="text-safetyOrange">Lucid: <span id="ledger-read-lucidity"></span>/10</span>
                     <span class="text-[#33ff33]">Words: <span id="ledger-read-words"></span></span>
@@ -678,8 +693,11 @@
                 <span>MINIMUM_REQUIRED: 20</span>
             </div>
 
-            <p class="mb-4 font-mono text-xs">> LUCIDITY LEVEL (1-10):</p>
-            <input type="number" id="dream-lucidity" min="1" max="10" class="w-full bg-transparent border-b border-[#33ff33] text-[#33ff33] outline-none mb-6 font-mono">
+            <div class="flex justify-between items-baseline mb-4">
+                <p class="font-mono text-xs">> LUCIDITY LEVEL (1-10):</p>
+                <span id="lucidity-value-display" class="font-mono text-xs text-safetyOrange font-bold">5 - VIVID</span>
+            </div>
+            <input type="range" id="dream-lucidity" min="1" max="10" step="1" value="5" oninput="updateLucidityDisplay(this.value)" class="w-full accent-safetyOrange mb-6 cursor-pointer">
             
             <p class="mb-4 font-mono text-xs">> AFFECT (EMOTION RIVER):</p>
             <input type="text" id="dream-affect" class="w-full bg-transparent border-b border-[#33ff33] text-[#33ff33] outline-none mb-6 font-mono" placeholder="e.g. Euphoria, Fear, Awe">

@@ -100,6 +100,10 @@ function renderDiagnostic() {
     localStorage.setItem('SV_diagnostic_responses', JSON.stringify(STATE.responses));
     localStorage.setItem('SV_diagnostic_step', STATE.diagnosticStep);
 
+    const progressPct = (STATE.diagnosticStep / NeuroEngine.diagnosticFlow.length) * 100;
+    const progressBar = document.getElementById('diagnostic-progress-bar');
+    if (progressBar) progressBar.style.width = `${progressPct}%`;
+
     document.getElementById('q-domain').textContent = `Step ${STATE.diagnosticStep + 1} of ${NeuroEngine.diagnosticFlow.length}`;
     document.getElementById('q-text').textContent = q.question;
     
@@ -1128,6 +1132,19 @@ function triggerLevelUp(level) {
     showCRT(`> [ EVOLUTION DETECTED ]\n> PROFICIENCY INCREASED TO LEVEL ${level}.\n> NEURAL PATHWAYS OPTIMIZED.`, 4000);
 }
 
+function updateLucidityDisplay(val) {
+    const display = document.getElementById('lucidity-value-display');
+    if (!display) return;
+
+    let label = "VAGUE";
+    if (val >= 3) label = "FRAGMENTED";
+    if (val >= 5) label = "VIVID";
+    if (val >= 7) label = "LUCID";
+    if (val >= 9) label = "GOD-LIKE CONTROL";
+
+    display.textContent = `${val} - ${label}`;
+}
+
 window.onload = init;
 window.prevDiagnostic = prevDiagnostic;
 window.proceedToPaywall = proceedToPaywall;
@@ -1141,6 +1158,7 @@ window.openDreamLogger = openDreamLogger;
 window.saveDreamLog = saveDreamLog;
 window.startSTT = startSTT;
 window.clearAllData = clearAllData;
+window.updateLucidityDisplay = updateLucidityDisplay;
 window.exportVault = exportVault;
 window.importVault = importVault;
 window.closeCRT = closeCRT;

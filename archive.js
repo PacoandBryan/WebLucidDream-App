@@ -422,6 +422,7 @@ window.filterLedger = function(query) {
 };
 
 window.openLedgerView = function(logData) {
+    STATE.currentLogId = logData.id; // Store current log ID for deletion
     const panel = document.getElementById('archive-ledger-panel');
     panel.classList.remove('translate-x-full');
     
@@ -459,6 +460,24 @@ window.showLedgerList = function() {
 
 window.closeLedgerView = function() {
     document.getElementById('archive-ledger-panel').classList.add('translate-x-full');
+    STATE.currentLogId = null;
+};
+
+window.deleteCurrentDreamLog = async function() {
+    if (!STATE.currentLogId) return;
+    if (!confirm("> [ WARNING ] CONFIRM PERMANENT DELETION OF THIS NEURAL LOG?")) return;
+
+    delete STATE.dreamLogs[STATE.currentLogId];
+    await window.SovereignVault.set('dreamLogs', STATE.dreamLogs);
+
+    // Close read mode and refresh list
+    window.showLedgerList();
+    renderArchive();
+
+    // Notification
+    if (window.showCRT) {
+        window.showCRT("> [ SYSTEM ] NEURAL LOG PURGED SUCCESSFULLY.", 2000);
+    }
 };
 
 window.exportDreamsPlaintext = function() {
@@ -490,4 +509,8 @@ window.exportDreamsPlaintext = function() {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+
+    if (window.showCRT) {
+        window.showCRT("> [ SYSTEM ] NEURAL LEDGER EXPORTED SUCCESSFULLY.", 3000);
+    }
 };
