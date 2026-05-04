@@ -234,12 +234,22 @@ class DreamClusterEngine {
             this.ctx.globalAlpha = isMatch ? 1.0 : 0.05;
             
             // Subtle, pristine look
-            this.ctx.shadowBlur = node.lucidity; // Small blur instead of massive bloom
+            let glowSize = node.lucidity;
+            let finalSize = node.size;
+
+            // Pulse matches
+            if (isMatch && this.searchQuery) {
+                const pulse = Math.sin(Date.now() / 200) * 5;
+                glowSize += 10 + pulse;
+                finalSize += pulse * 0.5;
+            }
+
+            this.ctx.shadowBlur = glowSize;
             this.ctx.shadowColor = node.color;
             this.ctx.fillStyle = node.color;
             
             this.ctx.beginPath();
-            this.ctx.arc(node.x, node.y, node.size, 0, Math.PI * 2);
+            this.ctx.arc(node.x, node.y, Math.max(1, finalSize), 0, Math.PI * 2);
             this.ctx.fill();
             
             // Hover Overlay
@@ -461,6 +471,30 @@ window.showLedgerList = function() {
 window.closeLedgerView = function() {
     document.getElementById('archive-ledger-panel').classList.add('translate-x-full');
     STATE.currentLogId = null;
+};
+
+window.editDreamLog = function() {
+    if (!STATE.currentLogId) return;
+    const log = STATE.dreamLogs[STATE.currentLogId];
+    if (!log) return;
+
+    // Close Archive / Ledger UI
+    window.closeLedgerView();
+    window.showPhase('DASHBOARD');
+
+    // Open Dream Logger with existing data
+    window.openDreamLogger();
+
+    document.getElementById('dream-tags').value = log.tags || '';
+    document.getElementById('dream-lucidity').value = log.lucidity || 5;
+    document.getElementById('dream-affect').value = log.affect || '';
+    document.getElementById('dream-narrative').value = log.narrative || '';
+
+    window.updateLucidityDisplay(log.lucidity || 5);
+
+    // Trigger word count update
+    const textarea = document.getElementById('dream-narrative');
+    if (textarea) textarea.oninput();
 };
 
 window.deleteCurrentDreamLog = async function() {

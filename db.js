@@ -143,9 +143,12 @@ window.SovereignStore = {
         this.set('profile', profile);
         return { profile, leveledUp };
     },
-    updateStreak(isSuccess) {
+    updateStreak(dayIndex) {
         const profile = this.getProfile();
-        profile.Current_Streak = isSuccess ? profile.Current_Streak + 1 : 0;
+        if (profile.Last_Completed_Day === dayIndex) return; // Already counted today
+
+        profile.Current_Streak++;
+        profile.Last_Completed_Day = dayIndex;
         this.set('profile', profile);
     },
     logCompliance(dayIndex, is100Percent) {
