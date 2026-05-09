@@ -651,9 +651,14 @@
                 
                 <div class="flex justify-between items-start mb-2">
                     <h3 id="ledger-read-date" class="text-xs font-mono opacity-50"></h3>
-                    <button onclick="deleteCurrentDreamLog()" class="font-mono text-[9px] text-safetyOrange hover:bg-safetyOrange hover:text-white px-2 py-1 border border-safetyOrange transition-all uppercase">
-                        [ DELETE LOG ]
-                    </button>
+                    <div class="flex gap-2">
+                        <button onclick="editDreamLog()" class="font-mono text-[9px] text-[#33ff33] hover:bg-[#33ff33] hover:text-black px-2 py-1 border border-[#33ff33] transition-all uppercase">
+                            [ EDIT LOG ]
+                        </button>
+                        <button onclick="deleteCurrentDreamLog()" class="font-mono text-[9px] text-safetyOrange hover:bg-safetyOrange hover:text-white px-2 py-1 border border-safetyOrange transition-all uppercase">
+                            [ DELETE LOG ]
+                        </button>
+                    </div>
                 </div>
                 <div class="flex gap-4 mb-6 text-xs font-mono uppercase">
                     <span class="text-safetyOrange">Lucid: <span id="ledger-read-lucidity"></span>/10</span>
@@ -705,7 +710,7 @@
             <p class="mb-4 font-mono text-xs">> DREAM TAGS:</p>
             <input type="text" id="dream-tags" class="w-full bg-transparent border-b border-[#33ff33] text-[#33ff33] outline-none mb-12 font-mono" placeholder="e.g. #vivid, #lucid, #flying">
             
-            <button onclick="saveDreamLog()" class="w-full border border-[#33ff33] py-4 hover:bg-[#33ff33] hover:text-black transition-all uppercase font-bold">
+            <button id="save-dream-btn" onclick="saveDreamLog()" disabled class="w-full border border-[#33ff33] py-4 hover:bg-[#33ff33] hover:text-black transition-all uppercase font-bold disabled:opacity-30 disabled:cursor-not-allowed">
                 [ COMMIT TO PERMANENT LEDGER ]
             </button>
         </div>

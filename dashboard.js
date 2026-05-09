@@ -86,6 +86,8 @@ async function showCRT(text, duration = 3000, showClose = false) {
 
 function closeCRT() {
     UI.crt.overlay.style.display = 'none';
+    UI.crt.logger.classList.add('hidden');
+    STATE.currentLogId = null;
 }
 
 // --- DIAGNOSTIC ---
@@ -637,11 +639,14 @@ window.updateMissionData = async function(day, stepIdx, field, value) {
         if (!STATE.protocol.missionData[day][stepIdx].checked) {
             const { leveledUp, profile } = window.SovereignStore.addXP(100);
             if (leveledUp) triggerLevelUp(profile.Proficiency_Level);
-            window.SovereignStore.updateStreak(true);
         }
     }
     
     STATE.protocol.missionData[day][stepIdx][field] = value;
+
+    if (field === 'checked' && value === true) {
+        checkDayCompletion(day);
+    }
     await window.SovereignVault.set('protocol', STATE.protocol);
     
     const startDate = new Date(STATE.protocol.startDate);
@@ -841,6 +846,31 @@ function checkTimeLock(targetTime) {
     }
 }
 
+async function checkDayCompletion(dayIndex) {
+    // 1. Check Habits (Target is 2 habits per day in most phases)
+    const dayHabits = STATE.protocol.dailyLogs[dayIndex] || {};
+    const habitIds = Object.keys(dayHabits);
+    const habitsDone = habitIds.length >= 2 && habitIds.every(id => dayHabits[id] === true);
+
+    // 2. Check Missions
+    const dayMissions = STATE.protocol.missionData[dayIndex] || {};
+    const missions = STATE.protocol.dailyMissions[dayIndex - 1]?.steps || [];
+    const missionsDone = missions.length > 0 && missions.every((_, idx) => dayMissions[idx]?.checked === true);
+
+    if (habitsDone && missionsDone) {
+        window.SovereignStore.logCompliance(dayIndex, true);
+        window.SovereignStore.updateStreak(dayIndex);
+
+        // Bonus for perfect day if not already awarded
+        if (!STATE.protocol.dailyLogs[dayIndex]?.perfect_bonus) {
+            STATE.protocol.dailyLogs[dayIndex] = STATE.protocol.dailyLogs[dayIndex] || {};
+            STATE.protocol.dailyLogs[dayIndex].perfect_bonus = true;
+            const { leveledUp, profile } = window.SovereignStore.addXP(250);
+            if (leveledUp) triggerLevelUp(profile.Proficiency_Level);
+        }
+    }
+}
+
 async function logHabit(habitId) {
     const habit = STATE.protocol.targetHabits.find(h => h.id === habitId);
     const { isLocked } = checkTimeLock(habit.target_time);
@@ -859,14 +889,8 @@ async function logHabit(habitId) {
     // Gamification System Rewards
     const { leveledUp: l1, profile: p1 } = window.SovereignStore.addXP(100);
     if (l1) triggerLevelUp(p1.Proficiency_Level);
-    window.SovereignStore.updateStreak(true);
 
-    const logArray = Object.values(STATE.protocol.dailyLogs[currentDay]);
-    if (logArray.length === 4 && logArray.every(v => v === true)) {
-        window.SovereignStore.logCompliance(currentDay, true);
-        const { leveledUp: l2, profile: p2 } = window.SovereignStore.addXP(250); // Bonus for perfect day
-        if (l2) triggerLevelUp(p2.Proficiency_Level);
-    }
+    checkDayCompletion(currentDay);
 
     await window.SovereignVault.set('protocol', STATE.protocol);
     renderDashboard();
@@ -931,9 +955,21 @@ function openDreamLogger() {
     // Auto-update word count
     const textarea = document.getElementById('dream-narrative');
     const display = document.getElementById('word-count-display');
+    const saveBtn = document.getElementById('save-dream-btn');
+
     textarea.oninput = () => {
         const count = textarea.value.trim().split(/\s+/).filter(Boolean).length;
         display.textContent = `WORDS_DETECTED: ${count}`;
+
+        if (count >= 20) {
+            display.classList.remove('text-safetyOrange');
+            display.classList.add('text-[#33ff33]');
+            saveBtn.disabled = false;
+        } else {
+            display.classList.add('text-safetyOrange');
+            display.classList.remove('text-[#33ff33]');
+            saveBtn.disabled = true;
+        }
     };
 }
 
@@ -973,11 +1009,9 @@ async function saveDreamLog() {
         return;
     }
 
-    const startDate = new Date(STATE.protocol.startDate);
-    const today = new Date();
-    const day = Math.ceil(Math.abs(today - startDate) / (1000 * 60 * 60 * 24)) || 1;
+    const logId = STATE.currentLogId || `log_${Date.now()}`;
 
-    STATE.dreamLogs[day] = { tags, lucidity, affect, words, narrative, timestamp: new Date().toISOString() };
+    STATE.dreamLogs[logId] = { tags, lucidity, affect, words, narrative, timestamp: new Date().toISOString() };
     await window.SovereignVault.set('dreamLogs', STATE.dreamLogs);
 
     // Gamification Reward logic
@@ -996,10 +1030,11 @@ async function saveDreamLog() {
     // Close and reset
     UI.crt.logger.classList.add('hidden');
     document.getElementById('dream-tags').value = '';
-    document.getElementById('dream-lucidity').value = '';
+    document.getElementById('dream-lucidity').value = '5';
     document.getElementById('dream-affect').value = '';
     document.getElementById('dream-narrative').value = '';
     document.getElementById('word-count-display').textContent = 'WORDS_DETECTED: 0';
+    STATE.currentLogId = null; // Clear ID after save
     
     await showCRT(`> DATA COMMITTED TO VAULT.\n> CORRELATION ENGINE UPDATED.\n${rewardStr}\n> DISCONNECTING...`, 4000);
     renderDashboard();
