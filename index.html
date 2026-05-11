@@ -708,7 +708,8 @@
             <input type="text" id="dream-affect" class="w-full bg-transparent border-b border-[#33ff33] text-[#33ff33] outline-none mb-6 font-mono" placeholder="e.g. Euphoria, Fear, Awe">
             
             <p class="mb-4 font-mono text-xs">> DREAM TAGS:</p>
-            <input type="text" id="dream-tags" class="w-full bg-transparent border-b border-[#33ff33] text-[#33ff33] outline-none mb-12 font-mono" placeholder="e.g. #vivid, #lucid, #flying">
+            <input type="text" id="dream-tags" list="tag-suggestions" class="w-full bg-transparent border-b border-[#33ff33] text-[#33ff33] outline-none mb-12 font-mono" placeholder="e.g. #vivid, #lucid, #flying">
+            <datalist id="tag-suggestions"></datalist>
             
             <button id="save-dream-btn" onclick="saveDreamLog()" disabled class="w-full border border-[#33ff33] py-4 hover:bg-[#33ff33] hover:text-black transition-all uppercase font-bold disabled:opacity-30 disabled:cursor-not-allowed">
                 [ COMMIT TO PERMANENT LEDGER ]
