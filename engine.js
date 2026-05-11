@@ -396,7 +396,7 @@ const NeuroEngine = {
                 },
                 { 
                     id: 'priming', 
-                    title: 'Phase 2: Circadian Anchoring', 
+                    title: isVetoed ? 'Phase 2: Substrate Stabilization' : 'Phase 2: Circadian Anchoring',
                     days: [31, 60],
                     habits: [
                         { id: 'anchor_wake', tier: 2, title: 'Circadian Anchor', target_time: r.wake_work_time || '07:00', desc: 'Strict ±45m wake variance to stabilize T-min.' },
@@ -405,9 +405,12 @@ const NeuroEngine = {
                 },
                 { 
                     id: 'induction', 
-                    title: 'Phase 3: ACh Super-Surge', 
+                    title: isVetoed ? 'Phase 3: REM Recovery' : 'Phase 3: ACh Super-Surge',
                     days: [61, 90],
-                    habits: [
+                    habits: isVetoed ? [
+                        { id: 'consistency_check', tier: 3, title: 'Consistency Lock', target_time: '22:30', desc: 'Maintain strict sleep window to allow natural REM rebound.' },
+                        { id: 'recall_deepening', tier: 3, title: 'Mnemonic Depth', target_time: '07:30', desc: 'Deep-dive dream logging (min 100 words) to strengthen recall.' }
+                    ] : [
                         { id: 'wbtb_intercept', tier: 3, title: 'Circadian Intercept', target_time: results.tMin, desc: 'Wake at T-min to maximize cholinergic REM density.' },
                         { id: 'induction_method', tier: 3, 
                           title: r.hypnagogic_patterns === 'HIGH' ? 'MILD Intensive' : 'SSILD Sensory Loop', 
@@ -471,26 +474,38 @@ const NeuroEngine = {
                 
             } else if (i <= 60) {
                 // Phase 2
-                header = "CIRCADIAN ANCHORING";
+                header = isVetoed ? "SUBSTRATE STABILIZATION" : "CIRCADIAN ANCHORING";
                 dayMissions.push({ time: "12:00", task: "Intent Priming: Reality test mapped to digital triggers (e.g. phone checks)." });
                 dayMissions.push({ time: "18:00", task: "Circadian Lock: Guard against social jetlag. Stabilize sleep/wake rhythm." });
                 
-                if (i === 45) dayMissions.push({ time: "15:00", task: "Prospective Memory Target: Choose a specific object (e.g., a red car) and test upon seeing it."});
-                else if (i % 5 === 0) dayMissions.push({ time: "22:00", task: "Text Stability Check: Read text, look away, read again. Practice this."});
-                else dayMissions.push({ time: "10:30", task: "Gravity Test: Pause and ask 'Does gravity feel normal here?'" });
+                if (isVetoed) {
+                    dayMissions.push({ time: "21:00", task: "Neuro-Calm: 10m mindfulness meditation to lower cortisol before sleep." });
+                } else if (i === 45) {
+                    dayMissions.push({ time: "15:00", task: "Prospective Memory Target: Choose a specific object (e.g., a red car) and test upon seeing it."});
+                } else if (i % 5 === 0) {
+                    dayMissions.push({ time: "22:00", task: "Text Stability Check: Read text, look away, read again. Practice this."});
+                } else {
+                    dayMissions.push({ time: "10:30", task: "Gravity Test: Pause and ask 'Does gravity feel normal here?'" });
+                }
 
             } else {
                 // Phase 3
-                header = "ACH SUPER-SURGE";
+                header = isVetoed ? "REM RECOVERY" : "ACH SUPER-SURGE";
                 dayMissions.push({ time: "14:00", task: "Targeted Memory: 5 reality checks linked to emotional spikes." });
-                dayMissions.push({ time: tMin, task: `WBTB Intercept: Wake up at T-Min, stay alert for 15-45m without bright lights.` });
                 
-                if (i === 61 || i % 3 === 0) {
-                    dayMissions.push({ time: "03:00", task: "MILD Intensive: Visualize your last dream during WBTB, re-entering with lucidity." });
-                } else if (i === 90) {
-                    dayMissions.push({ time: "03:00", task: "The Sovereign Ascent: Full SSILD/WBTB stack. Tonight is the peak." });
+                if (isVetoed) {
+                    dayMissions.push({ time: "22:30", task: "Sleep Hygiene: Ensure total darkness and cool temperature (18°C)." });
+                    dayMissions.push({ time: wakeTime, task: "Deep Ledger: Write at least 100 words about any dream memories." });
                 } else {
-                    dayMissions.push({ time: "03:00", task: "Sensory Loop: Cycle through Sight, Sound, and Touch focus in the dark." });
+                    dayMissions.push({ time: tMin, task: `WBTB Intercept: Wake up at T-Min, stay alert for 15-45m without bright lights.` });
+
+                    if (i === 61 || i % 3 === 0) {
+                        dayMissions.push({ time: "03:00", task: "MILD Intensive: Visualize your last dream during WBTB, re-entering with lucidity." });
+                    } else if (i === 90) {
+                        dayMissions.push({ time: "03:00", task: "The Sovereign Ascent: Full SSILD/WBTB stack. Tonight is the peak." });
+                    } else {
+                        dayMissions.push({ time: "03:00", task: "Sensory Loop: Cycle through Sight, Sound, and Touch focus in the dark." });
+                    }
                 }
             }
 

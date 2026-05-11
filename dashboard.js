@@ -431,20 +431,66 @@ function renderDashboard() {
     }
 }
 
+function getRequiredTaskCounts(dayIndex) {
+    if (!STATE.protocol) return { habits: 0, missions: 0, total: 0 };
+
+    // Calculate habits for this day
+    let habitCount = 0;
+    STATE.protocol.phases.forEach(phase => {
+        if (dayIndex >= phase.days[0] && dayIndex <= phase.days[1]) {
+            habitCount += phase.habits.length;
+        }
+    });
+    // Always include foundation habits if not already included (mirroring renderHabitCards logic)
+    const foundationHabitIds = STATE.protocol.phases[0].habits.map(h => h.id);
+    let extraFoundation = 0;
+    STATE.protocol.phases[0].habits.forEach(h => {
+        let alreadyCounted = false;
+        STATE.protocol.phases.forEach(phase => {
+            if (dayIndex >= phase.days[0] && dayIndex <= phase.days[1]) {
+                if (phase.habits.find(ph => ph.id === h.id)) alreadyCounted = true;
+            }
+        });
+        if (!alreadyCounted) extraFoundation++;
+    });
+    habitCount += extraFoundation;
+
+    // Calculate missions for this day
+    const mission = STATE.protocol.dailyMissions[dayIndex - 1];
+    const missionCount = mission ? mission.steps.length : 0;
+
+    return {
+        habits: habitCount,
+        missions: missionCount,
+        total: habitCount + missionCount
+    };
+}
+
 function render90DayHeatmap(currentDay) {
     const grid = document.getElementById('heatmap-grid');
     grid.innerHTML = '';
     grid.className = 'grid grid-cols-10 gap-1'; 
 
-    let totalCompleted = 0;
+    let totalPossibleTasks = 0;
+    let totalCompletedTasks = 0;
 
     for (let i = 1; i <= 90; i++) {
         const square = document.createElement('div');
-        const log = STATE.protocol.dailyLogs[i] || {};
-        const completedCount = Object.values(log).filter(v => v === true).length;
-        const percent = (completedCount / 4) * 100;
         
-        if (completedCount > 0) totalCompleted += (completedCount / 4);
+        const counts = getRequiredTaskCounts(i);
+        const habitLogs = STATE.protocol.dailyLogs[i] || {};
+        const missionLogs = STATE.protocol.missionData?.[i] || {};
+
+        const habitsDone = Object.keys(habitLogs).filter(k => k !== 'perfect_bonus' && habitLogs[k] === true).length;
+        const missionsDone = Object.values(missionLogs).filter(m => m.checked === true).length;
+
+        const completedCount = habitsDone + missionsDone;
+        const percent = counts.total > 0 ? (completedCount / counts.total) * 100 : 0;
+
+        if (i <= currentDay) {
+            totalPossibleTasks += counts.total;
+            totalCompletedTasks += completedCount;
+        }
 
         square.className = 'aspect-square rounded-sm transition-all duration-300 cursor-pointer hover:scale-110';
         
@@ -463,11 +509,14 @@ function render90DayHeatmap(currentDay) {
             square.classList.add('animate-pulse');
         }
 
-        square.onclick = () => showDayDiagnostic(i, log);
+        const status = percent === 100 ? 'Optimal' : (percent > 0 ? 'Partial' : (i < currentDay ? 'Missed' : 'Pending'));
+        square.title = `Day ${i}: ${completedCount}/${counts.total} Tasks (${status})`;
+
+        square.onclick = () => showDayDiagnostic(i, habitLogs);
         grid.appendChild(square);
     }
 
-    const compliancePct = (totalCompleted / 90) * 100;
+    const compliancePct = totalPossibleTasks > 0 ? (totalCompletedTasks / totalPossibleTasks) * 100 : 0;
     document.getElementById('compliance-pct').textContent = `${Math.round(compliancePct)}%`;
 }
 
@@ -584,6 +633,7 @@ function renderMissionLog(currentDay) {
                     <div class="pl-9">
                         <input type="text" id="mission-note-${day}-${stepIdx}" value="${data.note || ''}" ${disabledAttr}
                             onchange="updateMissionData(${day}, ${stepIdx}, 'note', this.value)"
+                            oninput="this.style.borderColor = ''; this.style.boxShadow = '';"
                             placeholder="${isLocked && !data.checked ? 'Data link offline...' : 'Enter system data / log note...'}" 
                             class="w-full bg-transparent border-b border-primaryText/10 outline-none font-mono text-[10px] text-primaryText focus:border-safetyOrange transition-colors py-1 ${disabledAttr ? 'cursor-not-allowed' : ''}">
                     </div>
@@ -622,7 +672,11 @@ window.updateMissionData = async function(day, stepIdx, field, value) {
             showCRT("> [ SYSTEM ERROR ]\n> DATA LOG NOTE REQUIRED TO COMMIT MISSION.");
             if (noteInput) {
                 noteInput.style.borderColor = '#ff4757';
+                noteInput.style.boxShadow = '0 0 10px rgba(255, 71, 87, 0.5)';
+                noteInput.classList.add('animate-pulse');
+                setTimeout(() => noteInput.classList.remove('animate-pulse'), 2000);
                 noteInput.placeholder = '[ SYSTEM ERROR: DATA LOG REQUIRED TO FINISH MISSION ]';
+                noteInput.focus();
             }
             
             // Revert checkbox check natively
@@ -847,17 +901,15 @@ function checkTimeLock(targetTime) {
 }
 
 async function checkDayCompletion(dayIndex) {
-    // 1. Check Habits (Target is 2 habits per day in most phases)
+    const counts = getRequiredTaskCounts(dayIndex);
+
     const dayHabits = STATE.protocol.dailyLogs[dayIndex] || {};
-    const habitIds = Object.keys(dayHabits);
-    const habitsDone = habitIds.length >= 2 && habitIds.every(id => dayHabits[id] === true);
+    const habitsDoneCount = Object.keys(dayHabits).filter(k => k !== 'perfect_bonus' && dayHabits[k] === true).length;
 
-    // 2. Check Missions
     const dayMissions = STATE.protocol.missionData[dayIndex] || {};
-    const missions = STATE.protocol.dailyMissions[dayIndex - 1]?.steps || [];
-    const missionsDone = missions.length > 0 && missions.every((_, idx) => dayMissions[idx]?.checked === true);
+    const missionsDoneCount = Object.values(dayMissions).filter(m => m.checked === true).length;
 
-    if (habitsDone && missionsDone) {
+    if (habitsDoneCount + missionsDoneCount >= counts.total && counts.total > 0) {
         window.SovereignStore.logCompliance(dayIndex, true);
         window.SovereignStore.updateStreak(dayIndex);
 
@@ -902,12 +954,23 @@ async function handleEmergencyEject() {
     const diffDays = Math.ceil(Math.abs(today - startDate) / (1000 * 60 * 60 * 24)) || 1;
 
     // Calculate total compliance
-    let totalPossible = diffDays * 4;
+    let totalPossible = 0;
     let actualCompleted = 0;
-    Object.values(STATE.protocol.dailyLogs).forEach(dayLog => {
-        actualCompleted += Object.values(dayLog).filter(v => v === true).length;
-    });
-    const compliancePct = Math.round((actualCompleted / totalPossible) * 100) || 0;
+
+    for (let i = 1; i <= diffDays; i++) {
+        const counts = getRequiredTaskCounts(i);
+        totalPossible += counts.total;
+
+        const habitLogs = STATE.protocol.dailyLogs[i] || {};
+        const habitsDone = Object.keys(habitLogs).filter(k => k !== 'perfect_bonus' && habitLogs[k] === true).length;
+
+        const missionLogs = STATE.protocol.missionData?.[i] || {};
+        const missionsDone = Object.values(missionLogs).filter(m => m.checked === true).length;
+
+        actualCompleted += (habitsDone + missionsDone);
+    }
+
+    const compliancePct = totalPossible > 0 ? Math.round((actualCompleted / totalPossible) * 100) : 0;
 
     const text = `> INITIALIZING PRE-CHECK TERMINAL...
 > SCANNING LOCAL VAULT...
@@ -951,6 +1014,22 @@ function openDreamLogger() {
     UI.crt.content.textContent = '> INITIALIZING SUBCONSCIOUS LEDGER...\n> STANDBY FOR NEURAL INPUT...';
     UI.crt.logger.classList.remove('hidden');
     document.getElementById('crt-close').classList.remove('hidden');
+
+    // Populate Tag Suggestions
+    const tagList = document.getElementById('tag-suggestions');
+    if (tagList) {
+        tagList.innerHTML = '';
+        const allTags = new Set();
+        Object.values(STATE.dreamLogs || {}).forEach(log => {
+            const tags = (log.tags || '').split(',').map(t => t.trim()).filter(Boolean);
+            tags.forEach(t => allTags.add(t));
+        });
+        allTags.forEach(tag => {
+            const opt = document.createElement('option');
+            opt.value = tag;
+            tagList.appendChild(opt);
+        });
+    }
     
     // Auto-update word count
     const textarea = document.getElementById('dream-narrative');
