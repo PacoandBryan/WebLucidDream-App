@@ -147,7 +147,12 @@ window.SovereignStore = {
         const profile = this.getProfile();
         if (profile.Last_Completed_Day === dayIndex) return; // Already counted today
 
-        profile.Current_Streak++;
+        if (profile.Last_Completed_Day !== undefined && dayIndex > profile.Last_Completed_Day + 1) {
+            profile.Current_Streak = 1;
+        } else {
+            profile.Current_Streak++;
+        }
+
         profile.Last_Completed_Day = dayIndex;
         this.set('profile', profile);
     },

@@ -325,8 +325,15 @@ function renderArchive() {
     } else {
         sortedTags.forEach(([tag, count]) => {
             const el = document.createElement('span');
-            el.className = 'px-3 py-1 bg-[#c084fc]/20 border border-[#c084fc]/50 text-[#e9d5ff] font-mono text-[10px] rounded-full';
+            el.className = 'px-3 py-1 bg-[#c084fc]/20 border border-[#c084fc]/50 text-[#e9d5ff] font-mono text-[10px] rounded-full cursor-pointer hover:bg-[#c084fc]/40 transition-colors';
             el.textContent = `#${tag} (${count})`;
+            el.onclick = () => {
+                const searchInput = document.getElementById('ledger-search-input');
+                if (searchInput) {
+                    searchInput.value = tag;
+                    window.filterLedger(tag);
+                }
+            };
             dominantTagsContainer.appendChild(el);
         });
     }

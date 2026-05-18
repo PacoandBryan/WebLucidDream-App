@@ -33,18 +33,26 @@ const UI = {
 // --- INITIALIZATION ---
 async function init() {
     const savedProtocol = await window.SovereignVault.get('protocol');
+    const savedResults = await window.SovereignVault.get('results');
     const savedLogs = await window.SovereignVault.get('dreamLogs');
     const licenseVerified = await window.SovereignVault.get('license_verified');
     
     if (savedLogs) STATE.dreamLogs = savedLogs;
+    if (savedResults) STATE.results = savedResults;
 
     if (savedProtocol && licenseVerified) {
         STATE.protocol = savedProtocol;
         showPhase('DASHBOARD');
         renderDashboard();
     } else if (savedProtocol) {
-        // We have a protocol but needs license
-        showPhase('PAYWALL');
+        // We have a protocol but needs license or time setup
+        STATE.protocol = savedProtocol;
+        if (STATE.results) {
+            renderPlanPreview(STATE.results);
+            proceedToPaywall(); // This will show the paywall with results
+        } else {
+            showPhase('PAYWALL');
+        }
     } else {
         // Restore diagnostic progress if any
         const savedResponses = localStorage.getItem('SV_diagnostic_responses');
@@ -147,7 +155,7 @@ function renderDiagnostic() {
     }
 }
 
-function finalizeDiagnostic() {
+async function finalizeDiagnostic() {
     // Clear persistence
     localStorage.removeItem('SV_diagnostic_responses');
     localStorage.removeItem('SV_diagnostic_step');
@@ -155,6 +163,10 @@ function finalizeDiagnostic() {
     const results = NeuroEngine.calculateResults(STATE.responses);
     STATE.results = results;
     STATE.protocol = NeuroEngine.generateProtocol(results);
+
+    // Persist immediately
+    await window.SovereignVault.set('protocol', STATE.protocol);
+    await window.SovereignVault.set('results', STATE.results);
 
     renderPlanPreview(results);
     showPhase('PREVIEW_1');
@@ -630,12 +642,13 @@ function renderMissionLog(currentDay) {
                             <div class="led-indicator ${indicatorClass} w-2 h-2 rounded-full"></div>
                         </div>
                     </div>
-                    <div class="pl-9">
+                    <div class="pl-9 flex flex-col gap-1">
                         <input type="text" id="mission-note-${day}-${stepIdx}" value="${data.note || ''}" ${disabledAttr}
                             onchange="updateMissionData(${day}, ${stepIdx}, 'note', this.value)"
-                            oninput="this.style.borderColor = ''; this.style.boxShadow = '';"
+                            oninput="this.style.borderColor = ''; this.style.boxShadow = ''; const count=document.getElementById('mission-note-count-${day}-${stepIdx}'); count.textContent = (this.value.length + '/10'); if(this.value.length >= 10) { count.classList.remove('text-safetyOrange'); } else { count.classList.add('text-safetyOrange'); }"
                             placeholder="${isLocked && !data.checked ? 'Data link offline...' : 'Enter system data / log note...'}" 
                             class="w-full bg-transparent border-b border-primaryText/10 outline-none font-mono text-[10px] text-primaryText focus:border-safetyOrange transition-colors py-1 ${disabledAttr ? 'cursor-not-allowed' : ''}">
+                        <div id="mission-note-count-${day}-${stepIdx}" class="font-mono text-[8px] text-right opacity-50 ${data.note && data.note.length < 10 ? 'text-safetyOrange' : ''}">${(data.note || '').length}/10</div>
                     </div>
                 `;
                 stepsContainer.appendChild(stepCard);
@@ -668,15 +681,18 @@ window.updateMissionData = async function(day, stepIdx, field, value) {
         const noteInput = document.getElementById(`mission-note-${day}-${stepIdx}`);
         const currentNote = noteInput ? noteInput.value.trim() : STATE.protocol.missionData[day][stepIdx].note.trim();
         
-        if (!currentNote) {
-            showCRT("> [ SYSTEM ERROR ]\n> DATA LOG NOTE REQUIRED TO COMMIT MISSION.");
+        if (currentNote.length < 10) {
+            showCRT("> [ SYSTEM ERROR ]\n> DATA LOG NOTE (MIN 10 CHARS) REQUIRED TO COMMIT MISSION.");
             if (noteInput) {
                 noteInput.style.borderColor = '#ff4757';
                 noteInput.style.boxShadow = '0 0 10px rgba(255, 71, 87, 0.5)';
                 noteInput.classList.add('animate-pulse');
                 setTimeout(() => noteInput.classList.remove('animate-pulse'), 2000);
-                noteInput.placeholder = '[ SYSTEM ERROR: DATA LOG REQUIRED TO FINISH MISSION ]';
+                noteInput.placeholder = '[ SYSTEM ERROR: 10 CHAR MINIMUM REQUIRED ]';
                 noteInput.focus();
+
+                const counter = document.getElementById(`mission-note-count-${day}-${stepIdx}`);
+                if (counter) counter.classList.add('text-safetyOrange');
             }
             
             // Revert checkbox check natively
@@ -714,6 +730,10 @@ function renderProficiencyUI() {
     const profile = window.SovereignStore.getProfile();
     document.getElementById('user-level-display').textContent = profile.Proficiency_Level;
     document.getElementById('user-xp-display').textContent = `${profile.User_XP} XP`;
+
+    const xpProgress = (profile.User_XP % 500) / 500 * 100;
+    const xpBar = document.getElementById('user-xp-bar');
+    if (xpBar) xpBar.style.width = `${xpProgress}%`;
 
     // Calculate LUSK (Average Lucidity) & LuCiD scale (proxy: avg words / 100 max)
     let totalLucidity = 0;
